@@ -27,8 +27,8 @@ atmo = [a, rho]
 # Used to obtain Aerodynamic Coefficients at different velocities 
 Velocities=(10,15,20,25,30,35)
 rho_vec=(1.225,1.225,1.225,1.225,1.225,1.225)
-Mach = [v/a for v in list(Velocities)]
-
+#Mach = [v/a for v in list(Velocities)]
+Mach=np.ones((len(Velocities),1))*0.0001 # To have incompressible flow as the speds are considered very low
 
 # Define DECOL Parameters
 inop_eng = 0 # Number of engines that are inoperative
@@ -67,10 +67,6 @@ g.alpha_i = 3.20 / 180 * np.pi
 # FLight measured Cd0:
 g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
                                                                                       
-#Prop-wing interaction settings
-g.isPropWing = True
-
-
 # Extracting the aerodynamic coefficients
 path = 'DECOL_STAB/'  
 filenameNoFin = [path + '_FinLess_Vinf10000.stab',

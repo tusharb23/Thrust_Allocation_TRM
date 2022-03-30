@@ -57,51 +57,63 @@ class data:
     ip = (-2.41)/180*np.pi # Propeller incidence angle with respect to zero lift line
     h_m = 0.05 # Distance from leading edge to propeller. Propeller is forward
     z_m = 0.025 # Approximate vertical distance between engine and CG. Propellers is above       
-    x_m = 0.104+h_m # Distance of the leading edge from the CG + h_m                      
-    
-    lv = 1.0765 #m
+    x_m = 0.104+h_m # Distance of the leading edge from the CG + h_m             
+
+    # Propeller Wing Interaction
+    IsPropWing=True
+    IsPropWingDrag=True
+         
+    # Vertical Fin Design Terms    
+    lv = 1.0765 #m # Distance of center of gravity from center of pressure of the horizontal tail 
     VolH = 0.8
-    it = 2.1/180*np.pi             # Angle between zero lift line and the fuselage
+    bh = 0.611                # Horizontal tail wingspan
+    Sh = 0.0877  # Horizontal tail surface
+    Hor_tail_coef_vol = (Sh*lv) / (S*c)     # 0.7552  Volume coef of Horizontal tail
+    taudr = 0.24  # ruder efficiency factor see nicolosi paper and dela-vecchia thesis
+    it = 2.1/180*np.pi             # Angle between zero lift line and the fuselage or horizontal tail tilt angle
     
-    # Unique coeff
-    # Basethrust=15000
-    aht = 3.834 # Horizontal tail lift slope alone
-    epsi_dot = - 0.3 # Downwash at tail
-    # Cm_de = -2 # per rad, is constant for DECOL             
-    Cm_alpha_fus = 0.015*180/np.pi                                                                                    
-    # alpha = 0 coeff
-    # With flaps down 15° 
-    """values to modify for DECOL 07/03/19"""
-    Cd0_fl = 0.01523 # Increase drag due to flap for prop wing interaction if no patterson used
-    CL0_fl = 0.264
-    Cm0_fl = (-0.0835+0.058)/5 # for 5° flap deflection, linear
-    # Parasitic drag without flap
-    Cd0 = 0.0108 + 0.0086 # Gear + nacelles
-    Cd0f = 0.00921
-    Cd0ht = 0.00273 # 0.025*0.0877/0.5
-    Cd0Vt0 = 0.00193
-    CD0T = Cd0 + Cd0f +Cd0ht + Cd0Vt0            # This is extracted from STAB file, not the one finally used, i.e. extracted from real test.
+    # ---Unique coeff ---
+    aht = 0.5448
+    epsi_dot = - 0.3  #  downwash at tail
+    #  Cm_de = -2 # per rad, is constant for DECOL             You can use the one from STAB file, or this one
+    Cm_alpha_fus = 0.015*180/np.pi
+    # alpha=0 coeff
+
+    # without flaps
+    CD0T = 0.0636         # global one  extracted from flight not stab the file
+    CDO_wo_VT = 0.0627
     CL0 = 0.44768
-    Cm0 = -0.058
+    CL0_HT = -0.002489
+    Cm0 = 0.004684
     CDMax90 = 1.25
-    # Drag polar without patterson. Interpolated from VSP v20, updated VSPAERO
-    Cda = 1.2956
-    Cdb = 0.1659
-    Cdc = 0.0087   
-    # Airfoil characteristics
+
+    # Drag polar without patterson. Interpolated from VSP v26, updated VSPAERO
+    Cda_fl_0 = 1.6372
+    Cdb_fl_0 = 0.2934
+    Cdc_fl_0 = 0.0637
+
+    # with flaps down 15°
+    Cd0_fl_15 = 0.026699          # Extra drag due to flap for prop wing interaction if no patterson used
+    CL0_fl_15 = 0.27142           # Extra lift due to flaps when no patterson used
+    Cm0_fl_15 = 0.096931          # Extra pitch moment due to flaps
+
+    Cda_fl_15 = 1.4937      # Coefficients for calculus of CD (CD=Cda * alpha ** 2 + Cdb * alpha + Cdc) for flaps = 15 °
+    Cdb_fl_15 = 0.4327
+    Cdc_fl_15 = 0.0905
+
+    #Airfoil characteristics
     Cd0_laminar = 0.01252 
     Cd0_turbulent = 0.01252
+
+    #wing tilt angle, angle between reference line of fuselaje and reference line of profile
+    alpha_i = 3.2/180*np.pi
     
-    # Wing tilt angle
-    alpha_w_t = 3.2/180*np.pi
+    #airfoil zero lift angle       angle between reference line of profile and zero lift line of airfoil. Negative means that airfoil lifts with 0 local angle of attack
+    alpha_0 = -2.41/180*np.pi  # update with vsp file
+
     
-    # Airfoil zero lift angle
-    alpha_0=-2.41/180*np.pi-alpha_w_t # update with vsp file
-    
-    # Additional coefficients
-    taudr = 0.24 # Ruuder efficiency factor see nicolosi paper and dela-vecchia thesis    
     # Input file name
-    Files =['cldistribution','polar','flappolar','aileronpolar'] # Best to replace the value
+    Files = ['cldistribution', 'polar', 'flappolar', 'aileronpolar']  # best to replace the value
     alphaVSP = 0/180*np.pi
     PolarFlDeflDeg = 5
 
@@ -124,7 +136,6 @@ class data:
         Kdr = 1.07*(1+(Kf-1)/2.2) # for a body mounted H tail
         return Kdr
             
-
     def SetEngineNumber(self):
         # To apply Patterson Theory, wing tip clearance should be True
         self.Dp = (self.b/2-self.FusWidth/2)/(self.N_eng/2+self.dfus+(self.N_eng/2-1)*self.dprop)

@@ -104,6 +104,21 @@ def fobjectivePropWingInterac(x, fix, rho, g):
     stdDx = np.std(Dx)
     return MeanDx*0.5+stdDx*0.5
 
+def fobjectiveDrag(x, fix, CoefMatrix , atmo, g, PropWing):
+     rho = atmo[1]
+     V=fix[0]
+     alpha=x[0]
+     beta=fix[1]
+     p=x[1]
+     q=x[2]
+     r=x[3]
+     sub_vect=np.array([alpha,beta,p,q,r])
+     sub_vect=np.append(sub_vect,[x[6],x[7],x[8]])
+     V_vect = np.ones(g.N_eng) * V * np.cos((-np.sign(g.PosiEng)) * beta + g.wingsweep) - r * g.PosiEng
+     Tc = g.DefaultProp(x[-g.N_eng:],V_vect)/(2*rho*g.Sp*V**2) 
+     F=AeroForces.CalcForce_aeroframe_DEP(V, np.copy(CoefMatrix), np.copy(sub_vect), Tc, atmo, g, PropWing)
+     return F[0]
+
 
 def Jac_DEP(x, fix, CoefMatrix, atmo, g, PropWing, h):
     # function to compute the jacobian at a steady state
