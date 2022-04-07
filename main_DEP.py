@@ -66,7 +66,16 @@ g.alpha_i = 3.20 / 180 * np.pi
 
 # FLight measured Cd0:
 g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
-                                                                                      
+                  
+# --- Study jacobian
+gojac = True
+storeJac = False
+OutputMatlab = True
+goFinVariation= False
+FinRatioVec = np.linspace(0.1,1.0,10)
+CstSpan = False
+CstA = True
+                                                            
 # Extracting the aerodynamic coefficients
 path = 'DECOL_STAB/'  
 filenameNoFin = [path + '_FinLess_Vinf10000.stab',
@@ -98,8 +107,11 @@ PW.CLslope[:,2] = PW.CLslope[:,2]*10**(-3)
 PW.DeltaCL_a_0 = 1 #CL_alpha correction factor
 
 
+# x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
+x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0]) # Assuming initial alpha to be 5degrees
+bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax), (thetaMin,thetaMax), (deltaAMin,deltaAMax), (deltaEMin,deltaEMax), (deltaRMin, deltaRMax))
 
-
+# For Longitudinal Flight alone
 
 
 
