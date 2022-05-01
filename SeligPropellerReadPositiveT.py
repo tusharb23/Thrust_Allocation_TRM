@@ -72,7 +72,6 @@ class Propu:
             Jposi=Heading_split.index('J')
             CTposi=Heading_split.index("CT")
             CPposi=Heading_split.index("CP")
-            
 
             for line in file:
                 words=line.split()

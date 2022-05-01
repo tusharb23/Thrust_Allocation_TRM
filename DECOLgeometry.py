@@ -5,9 +5,8 @@
 
 import math
 import numpy as np
-
 from SeligPropellerReadPositiveT import Propu
-
+from SeligPropellerRead import Propu
 
 class data:
     
@@ -32,7 +31,16 @@ class data:
     zf = 0.165+0.085 # 3.16m, z position of the MAC of the fin
     fswept = 0/180*math.pi # Swept angle of vertical tail
     ftaper = 1.0 # Taper Ratio
-    fAR = 1.8 # Aspect ratio                                                                                                
+    fAR = 1.8 # Aspect ratio    
+    lv = 1.809-x_cg  # m Distance from center of gravity to center of pressure of horizontal tail
+    lemac = 0.610124  # Distance from the tip to the leading edge of the MAC (here MAC matches with root chord)
+    VolH = 0.8
+    bh = 0.611                # Horizontal tail wingspan
+    Sh = 0.0877  # Horizontal tail surface
+    Hor_tail_coef_vol = (Sh*lv) / (S*c)     # 0.7552  Volume coef of Horizontal tail
+    taudr = 0.24  # Ruder efficiency factor see nicolosi paper and dela-vecchia thesis
+    it = 2.1/180*np.pi             # Angle between zero lift line and the fuselage or horizontal tail tilt angle 
+    Var_xac_fus = -0.019914 # Variation in the aerodynamic centre. Compute by difference of the neutral points on OpenVSP between wing and wing + fuselaje (without hor tail)                                                                                            
 
     # Flap & Aileron definition
     isflap = True                                                                                                       
@@ -49,34 +57,35 @@ class data:
     
     # Power
     P_a = 576
+    hp = 0 # Rotor term
     N_eng = 8  # Number of engines
     TipClearance = True
     dprop = 0.1 # Spacing between the propellers
     dfus = 0
     prop_eff = 0.7 # Propulsion efficiency
     ip = (-2.41)/180*np.pi # Propeller incidence angle with respect to zero lift line
-    h_m = 0.05 # Distance from leading edge to propeller. Propeller is forward
-    z_m = 0.025 # Approximate vertical distance between engine and CG. Propellers is above       
-    x_m = 0.104+h_m # Distance of the leading edge from the CG + h_m             
+    h_m = 0.05 # Distance from leading edge to propeller. Propeller is forward      
+    x_m = 0.104+h_m # Distance of the leading edge from the CG + h_m      
+    z_m = 0.075  # IGUAL ES 0.075 approximate vertical distance between engine and CG. Propellers is above. Computed with OpenVSP
+    z_h_w = 0.025  # vertical distance from the horizontal tail 1/4 point to the propeller axis. Computed with OpenVSP
+    lh = 1.16575    # Horizontal distance between the aerodynamic centers of horizontal tail and wing (0.25 of their chord in root is enough) Computed with OpenVSP.
+    lh2 = 0.942  # Horizontal distance from the wing trailing edge to the horizontal tail leading edge. Computed with OpenVSP
+    K_e = 1.44   # Down wash factor, see Modeling the Propeller Slipstream Effect on Lift and Pitching Moment, Bouquet, Thijs; Vos, Roelof
+    c_ht = 0.145  # Average chord of the horizontal tail
+    var_eps = 1.5  # parameter for inflow in slisptream. See Modeling the Propeller Slipstream Effect on Lift and Pitching Moment, Bouquet, Thijs; Vos, Roelof
+    cm_0_s = -0.0512  # zero lift pitching moment of the wing section at the propeller axis location. From the xlfr5 file, alpha = 0°       
 
     # Propeller Wing Interaction
     IsPropWing=True
     IsPropWingDrag=True
-         
-    # Vertical Fin Design Terms    
-    lv = 1.0765 #m # Distance of center of gravity from center of pressure of the horizontal tail 
-    VolH = 0.8
-    bh = 0.611                # Horizontal tail wingspan
-    Sh = 0.0877  # Horizontal tail surface
-    Hor_tail_coef_vol = (Sh*lv) / (S*c)     # 0.7552  Volume coef of Horizontal tail
-    taudr = 0.24  # ruder efficiency factor see nicolosi paper and dela-vecchia thesis
-    it = 2.1/180*np.pi             # Angle between zero lift line and the fuselage or horizontal tail tilt angle
+    nofin = False
     
     # ---Unique coeff ---
     aht = 0.5448
-    epsi_dot = - 0.3  #  downwash at tail
+    aht2 = 0.7049       # Horizontal tail lift coefficient, for the tail analysed alone. Dimensioned with S.
     #  Cm_de = -2 # per rad, is constant for DECOL             You can use the one from STAB file, or this one
     Cm_alpha_fus = 0.015*180/np.pi
+
     # alpha=0 coeff
 
     # without flaps
@@ -101,9 +110,20 @@ class data:
     Cdb_fl_15 = 0.4327
     Cdc_fl_15 = 0.0905
 
+    # Down-Wash parameters
+
+    # No flaps
+    eps0_flaps0 = 2.274 * np.pi/180   # Downwash at 0 angle of attack in no flaps configuration
+    deps_dalpha_flaps0 = 0.281        # Derivative of downwash with respect to alpha, no flaps conf
+
+    # 15° flaps
+    eps0_flaps15 = 4.07 * np.pi/180   # Downwash at 0 angle of attack in 15° flaps configuration
+    deps_dalpha_flaps15 = 0.281       # Derivative of downwash with respect to alpha, 15° flaps conf
+
     #Airfoil characteristics
     Cd0_laminar = 0.01252 
     Cd0_turbulent = 0.01252
+
 
     #wing tilt angle, angle between reference line of fuselaje and reference line of profile
     alpha_i = 3.2/180*np.pi
@@ -118,22 +138,22 @@ class data:
     PolarFlDeflDeg = 5
 
 
-    # Unique data go here:
-    def CalcKf(self, bv,r):
+    #unique data go here:
+    def CalcKf(self, bv, r):
         return 1.4685*(bv/(2*r))**(-0.143)
     
-    def CalcKw(self, zw,rf):
+    def CalcKw(self, zw, rf):
         return -0.0131*(zw/rf)**2-0.0459*(zw/rf)+1.0026
         
-    def CalcKh(self, zh,bvl, Sh, Sv):
+    def CalcKh(self, zh, bvl, Sh, Sv):
         x = zh/bvl
         Khp = 0.906*x**2-0.8403*x+1.1475
         Khs = math.exp(0.0797*math.log(Sh/Sv)-0.0079)
         return 1+Khs*(Khp-1)
     
-    def CalcKdr(self, Kf,Av):
-       # Kdr = (1+((Kf-1)/2.2))*(1.33-0.09*Av) # for T-tail formula
-        Kdr = 1.07*(1+(Kf-1)/2.2) # for a body mounted H tail
+    def CalcKdr(self, Kf, Av):
+        # Kdr=(1+((Kf-1)/2.2))*(1.33-0.09*Av) # for T-tail formula
+        Kdr = 1.07*(1+(Kf-1)/2.2)  # for a body mounted H tail
         return Kdr
             
     def SetEngineNumber(self):
@@ -145,8 +165,7 @@ class data:
         self.PosiEng = np.arange(self.FusWidth/2+self.Dp*(self.dfus+0.5),self.b/2,self.step_y)
         self.PosiEng = np.append(-self.PosiEng,self.PosiEng)
         self.PosiEng = np.sort(self.PosiEng)
-        return
-    
+        return   
     
     def InitPropeller(self, Dia, Pitch):                                       #Dia: Diameter in inches of propeller
         self.Propeller = Propu(Dia,Pitch)
@@ -154,88 +173,122 @@ class data:
         #update information about propeller
         self.Dp = Dia*0.0254
         self.Sp = np.pi*self.Dp**2/4
-
-    
-    def __init__(self, inop_eng, bv=0.329, r=0.057/2, zw=0.073, rf=0.085, zh=0, bvl=0.348, Sh=0.0877, Sv=0.06):
-        
+  
+    def __init__(self, inop_eng, bv=0.329, r=0.057/2, zw=0.073, rf=0.085, zh=0, bvl=0.348, Sh=0.0877, Sv=0.06, TipClearance = True, dfus=0, dprop=0.1):
+       
         self.VTsize=1 # We do not modify the vertical taile size
         self.SetEngineNumber()
-        self.Sv=Sv
-        self.SvBase=Sv
-        self.bv=bv
-        self.r=r
-        self.Av=bv**2/Sv
-        self.Sh=Sh
-        self.zw=zw
-        self.rf=rf
-        self.zh=zh
-        self.bvl=bv+r
+        self.inop = inop_eng
+        self.Sv = Sv
+        self.SvBase = Sv
+        self.bv = bv
+        self.r = r
+        self.Av = bv**2/Sv
+        self.Sh = Sh
+        self.zw = zw
+        self.rf = rf
+        self.zh = zh
+        self.bvl = bv+r
         
         #Update drag
         self.Cdvt = 0.01374*Sv/self.S
         
-        # Nicolosi csts
-        self.Kf=self.CalcKf(bv,r)
-        self.Kw=self.CalcKw(zw,rf)
-        self.Kh=self.CalcKh(zh,bvl,Sh,Sv)
-        self.Kdr=self.CalcKdr(self.Kf,self.Av)
-        self.taudrBase=0.018/Sv*0.8 # Rudder surface/fin surface * efficiency of rudder, rudder surface proportional to vtsize
+        #Nicolosi csts
+        self.Kf = self.CalcKf(bv, r)
+        self.Kw = self.CalcKw(zw, rf)
+        self.Kh = self.CalcKh(zh, bvl, Sh, Sv)
+        self.Kdr = self.CalcKdr(self.Kf, self.Av)
+        self.taudrBase = 0.018/Sv*0.8  #Rudder surface/fin surface * efficiency of rudder, rudder surface proportional to vtsize
+
+
+        #Aero coefficients for DragQuad
+        self.FlapDefl = 0   # For our problem statement we consider flap and aileron deflection to be zero
+        self.Cdo_fl, self.CL0_fl, self.Cm0_fl, self.Cda, self.Cdb, self.Cdc = self.AeroCoefs(self.FlapDefl)
         
         #Load propeller
-        self.InitPropeller(8,6)
+        self.InitPropeller(8, 6)
+
+    def AeroCoefs(self, FlapDefl):
+         if FlapDefl == 0:
+             self.Cd0_fl = 0
+             self.CL0_fl = 0
+             self.Cm0_fl = 0
+             self.Cda = self.Cda_fl_0
+             self.Cdb = self.Cdb_fl_0
+             self.Cdc = self.Cdc_fl_0
+             self.eps0 = self.eps0_flaps0
+             self.deps_dalpha = self.deps_dalpha_flaps0
+         elif FlapDefl == 15:
+             self.Cd0_fl = self.Cd0_fl_15
+             self.CL0_fl = self.CL0_fl_15
+             self.Cm0_fl = self.Cm0_fl_15
+             self.Cda = self.Cda_fl_15
+             self.Cdb = self.Cdb_fl_15
+             self.Cdc = self.Cdc_fl_15
+             self.eps0 = self.eps0_flaps15
+             self.deps_dalpha = self.deps_dalpha_flaps15
+         else:
+             print("Chose an allowable value for flaps deflection, options are: No flaps (0°) or 15°")
+             exit()
+         return self.Cd0_fl, self.CL0_fl, self.Cm0_fl, self.Cda, self.Cdb, self.Cdc
         
         
     def NicolosiCoef(self, MCoef, Mach):
-        # Function to compute Cy, Cl and Cn derivatives using VeDSC methods
-        # Replaces the coefficients in the matrix Mcoef by those computed by VeDSC
-        # To call only once, it computes for every velocities/Mach number. Then linear interpol
+        # function to compute Cy, Cl and Cn derivatives using VeDSC methods
+        # replaces the coefficients in the matrix Mcoef by those computed by VeDSC
+        # to call only once, it computes for every velocities/Mach number. Then linear interpol
         # Cy_beta, Cy_p = 0, Cy_r = 0, Cl_beta = 0, Cl_r = 0, Cn_beta= 0, Cn_p = 0, Cn_n = 0
         
-        MVeDSC=np.copy(MCoef) # create a copy of the coefficients matrix
-        # add a column to account for rudder
-        dimZero = len(MVeDSC[:,0])
-        MVeDSC = np.hstack( (MVeDSC,np.zeros((dimZero,1))) ) 
+        MVeDSC = np.copy(MCoef)  # create a copy of the coefficients matrix
+        if self.nofin == False:
+            # add a column to account for rudder
+            dimZero = len(MVeDSC[:, 0])
+            MVeDSC = np.hstack((MVeDSC, np.zeros((dimZero, 1))))
         
-        K=self.Kf*self.Kh*self.Kw
+        K = self.Kf*self.Kh*self.Kw
         for i in range(len(Mach)):
             Av = self.bv**2/self.Sv
+#            print(Av)
             cla = 2*math.pi # local lift curve slope coefficient of fin (perpendicular to leading edge) per rad
             eta = cla/(2*math.pi)
             av = -(Av * cla * math.cos(self.fswept) * 1/math.sqrt(1-Mach[i]**2*(math.cos(self.fswept))**2))/(Av*math.sqrt(1+4*eta**2/(Av/math.cos(self.fswept))**2)+2*eta*math.cos(self.fswept))# mach number formula
-            VeDSC_Coef = np.array([[0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0]])
-            VeDSC_Coef[0,0] = K*av*self.Sv/self.S
-            VeDSC_Coef[0,1] = K*av*self.Sv/self.S*self.zf/self.b*2
-            VeDSC_Coef[0,2] = -K*av*self.Sv/self.S*2*self.lv/self.b #apparently x position of fin doesn't change
-            VeDSC_Coef[0,3] = -self.Kdr*av*self.taudr*self.Sv/self.S
-            VeDSC_Coef[1,0] = K*av*self.Sv/self.S*2*self.zf/self.b
-            VeDSC_Coef[1,1] = 0
-            VeDSC_Coef[1,2] = -K*av*self.Sv/self.S*self.zf/self.b*self.lv/self.b*2.0
-            VeDSC_Coef[1,3] = -self.Kdr*av*self.taudr*self.Sv/self.S*2*self.zf/self.b
-            VeDSC_Coef[2,0] = -K*av*self.lv/self.b*self.Sv/self.S
-            VeDSC_Coef[2,1] = -K*av*self.lv/self.b*self.Sv/self.S*self.zf/self.b*2.0
-            VeDSC_Coef[2,2] = K*av*self.lv/self.b*self.Sv/self.S*self.lv/self.b*2.0
-            VeDSC_Coef[2,3] = self.Kdr*av*self.taudr*self.lv/self.b*self.Sv/self.S
+#            print(av)
+            VeDSC_Coef = np.array([[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]])
+            VeDSC_Coef[0, 0] = K*av*self.Sv/self.S
+            VeDSC_Coef[0, 1] = K*av*self.Sv/self.S*self.zf/self.b*2
+            VeDSC_Coef[0, 2] = -K*av*self.Sv/self.S*2*self.lv/self.b #apparently x position of fin doesn't change
+            VeDSC_Coef[0, 3] = -self.Kdr*av*self.taudr*self.Sv/self.S
+            VeDSC_Coef[1, 0] = K*av*self.Sv/self.S*2*self.zf/self.b
+            VeDSC_Coef[1, 1] = 0
+            VeDSC_Coef[1, 2] = -K*av*self.Sv/self.S*self.zf/self.b*self.lv/self.b*2.0
+            VeDSC_Coef[1, 3] = -self.Kdr*av*self.taudr*self.Sv/self.S*2*self.zf/self.b
+            VeDSC_Coef[2, 0] = -K*av*self.lv/self.b*self.Sv/self.S
+            VeDSC_Coef[2, 1] = -K*av*self.lv/self.b*self.Sv/self.S*self.zf/self.b*2.0
+            VeDSC_Coef[2, 2] = K*av*self.lv/self.b*self.Sv/self.S*self.lv/self.b*2.0
+            VeDSC_Coef[2, 3] = self.Kdr*av*self.taudr*self.lv/self.b*self.Sv/self.S
             # Coefficients are computed now access the right matrix and replace them
-            VarPosi = (1,2,4)
-            EffPosi = (1,3,5)
-            NumEff = 6 # number of force equations
+            VarPosi = (1, 2, 4)
+            EffPosi = (1, 3, 5)
+            NumEff = 6  # number of force equations
+#            print(VeDSC_Coef[2,2])
             for kk in range(len(EffPosi)):
                 # Replace rudder coefficient
-                MVeDSC[EffPosi[kk]+i*NumEff,-1] = VeDSC_Coef[kk,-1]
-                # Now coefficients are from the finless ATR. Add new coefficients to the matrix
+                if self.nofin == False:
+                    MVeDSC[EffPosi[kk]+i*NumEff, -1] = VeDSC_Coef[kk, -1]
+                # Now coefficients are from the finless DECOL. Add new coefficients to the matrix
                 for jj in range(len(VarPosi)):
-                    if VeDSC_Coef[kk,jj]!= 0:
-                        MVeDSC[EffPosi[kk]+i*NumEff,VarPosi[jj]] = MVeDSC[EffPosi[kk]+i*NumEff,VarPosi[jj]]+VeDSC_Coef[kk,jj]      
+                    if VeDSC_Coef[kk, jj] != 0:
+                        MVeDSC[EffPosi[kk]+i*NumEff, VarPosi[jj]] = MVeDSC[EffPosi[kk]+i*NumEff, VarPosi[jj]]+VeDSC_Coef[kk, jj]
+#            print(VeDSC_Coef)
+            
         return MVeDSC
-
-    
+ 
     def DefaultProp(self,dx,V):
         # Compute thrust based on throttle levels dx
         # Here, we neglect the effect of the angle of the thrust axis with the aircraft body x axis
         Thr = dx*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
         return Thr
-    
-    
+     
     def Thrust(self, dx, V):
         # Same as defaultprop but returns a vector instead
         Thr = dx*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
@@ -247,25 +300,19 @@ class data:
         Thr_zb = -np.sum(Thr*math.sin(self.ip)) # The direction of thrust will be along negative z-axis
         Thr_body = [Thr_xb, Thr_yb, Thr_zb]
         # The thrust is in the body frame so, it needs to be transformed to the aerodynamic frame in Equations
-        return Thr_body
-    
+        return Thr_body  
 
     def Torque(self,dx,V):
         # Compute torque consdering ip and hence, moments along all 3 axis
-        M_xb = 0    # Roll
-        M_yb = 0    # Pitch
-        M_zb = 0    # Yaw
-        M_xb = np.sum(np.dot(dx, -self.PosiEng)*math.sin(self.ip))
-        M_xb = M_xb*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
-        M_yb =-np.sum(dx)*math.cos(self.ip)*self.z_m + np.sum(dx)*math.sin(self.ip)*self.x_m
-        M_yb = M_yb*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
-        M_zb = np.sum(np.dot(dx, -self.PosiEng)*math.cos(self.ip))
-        M_zb = M_zb*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff 
-        # The moments are all in the body frame
-        M_body = [M_xb, M_yb, M_zb]
-        return M_body
-
-        
+        Force = self.DefaultProp(dx, V)
+        Moment= np.zeros((self.N_eng,3))
+        for i in range(self.N_eng):
+            a= np.array([ self.x_m , self.PosiEng[i] , self.z_m])
+            b=np.array([ Force[i]*np.cos(self.alpha_i + self.alpha_0+self.ip)  ,  0  ,  -Force[i]*np.sin(self.alpha_i + self.alpha_0+self.ip)  ])
+            Moment[i,:] = np.cross(a,b)
+        Thrust_Moment = np.array(( np.sum(Moment[:,0]), np.sum(Moment[:,1]) , np.sum(Moment[:,2]) ) )  
+        return Thrust_Moment
+   
     def DragModel(self, alpha, alpha_patter):
         # Added drag to account for induced drag due to flap deflection
         self.Cd_fl=(alpha_patter-alpha)*self.Cdalpha * self.FlRatio
