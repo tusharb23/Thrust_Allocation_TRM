@@ -39,10 +39,10 @@ inop_eng = 0 # Number of engines that are inoperative
 g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 
 # Constant Flight Parameters
-V = 23.5  # Velocity (m/s)
+V = 10   # Velocity (m/s)
 M = V/a
 beta = 0 / 180 * math.pi
-gamma = 5 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
+gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
 
@@ -136,13 +136,14 @@ fixtest = np.array([V, beta, gamma, omega])
 # put everything in tuples for passing to functions
 diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
 dicfobj = (np.copy(fixtest), rho, g)
-MaxIter = 100
+maxit = 100
 tolerance = 1e-5
 # SLSQP is working
 t0 = datetime.now()
-k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
+k = minimize(e.fobjectivedx, np.copy(x0), args=dicfobj,method='trust-constr', bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
-                         options={'maxiter': MaxIter, 'disp': True}, tol=tolerance)
+                         options={'maxiter': maxit,'verbose': 2, 
+                                  'disp': True}, tol=tolerance)
 t1 = datetime.now()
 print("Evaluation_time :" , t1-t0)
 print(k)
@@ -174,6 +175,13 @@ def printx(x, fix, atmo, g, PW):
 
 printx(k.x, fixtest, atmo,g,PW)
 
+# check if constraints are validated
+constraints_calc=e.Constraints_DEP(k.x,*diccons)
+print("\nConstraints")
+print(constraints_calc)
+
+# equation solver in python to compare results
+# see if PSO  and firefly has existing method
 
 
 
