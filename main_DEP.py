@@ -116,7 +116,6 @@ bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax),
 #deltaRmax = 30  # in degree
 #bnds=( (-5*math.pi/180,alphamax*math.pi/180), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (-phimax/180*math.pi,phimax/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-20/180*math.pi,20/180*math.pi), (-deltaRmax/180*math.pi,deltaRmax/180*math.pi))
 
-# For Longitudinal Flight alone
 # Complete the vectors with engines:
 eng_vec = np.array([0.4] * g.N_eng)
 x0 = np.append(x0, eng_vec)
