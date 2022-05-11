@@ -88,8 +88,8 @@ def fobjectivePower(x, fix, rho, g):
     Power = np.sum(x[-g.N_eng:])*2*g.P_var/float(g.N_eng)/1000000
     return Power
 
-def fobjectivedx(x):
-    J = np.sum(x[-8:]**2)
+def fobjectivedx(x, fix, Coef, atmo, g, PW):
+    J = np.sum(x[-g.N_eng:]**2)
     return J
 
 def fobjectivePropWingInterac(x, fix, rho, g):

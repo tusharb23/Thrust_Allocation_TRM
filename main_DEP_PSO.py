@@ -113,18 +113,12 @@ g.DisplayPatterInfo = False
 # x =[alpha, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
 
 x0=np.array([5*math.pi/180, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
-low_bnds = [alphaMin, thetaMin, deltaAMin, deltaEMin, deltaRMin]
-up_bnds = [alphaMax, thetaMax, deltaAMax, deltaEMax, deltaRMax]
+low_bnds = [alphaMin, thetaMin, deltaAMin, deltaEMin, deltaRMin, ThrottleMin, ThrottleMin, ThrottleMin, ThrottleMin, ThrottleMin, ThrottleMin, ThrottleMin, ThrottleMin]
+up_bnds = [alphaMax, thetaMax, deltaAMax, deltaEMax, deltaRMax, ThrottleMax, ThrottleMax, ThrottleMax, ThrottleMax, ThrottleMax, ThrottleMax, ThrottleMax, ThrottleMax]
 
 # Complete the vectors with engines:
 eng_vec = np.array([0.4] * g.N_eng)
 x0 = np.append(x0, eng_vec)
-## General formulation:
-low_bnds_eng = [ThrottleMin, ThrottleMin]
-up_bnds_eng = [ThrottleMax, ThrottleMax]
-for i in range(int(g.N_eng / 2)):
-    low_bnds.append(low_bnds_eng)
-    up_bnds.append(up_bnds_eng)
     
 # --- imposed conditions ---
 # fix = [V, beta, gamma, omega, H]
@@ -141,7 +135,7 @@ argscons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Vel
 t0 = datetime.now()
 xopt, fopt = pso(e.fobjectivedx, low_bnds, up_bnds, ieqcons=[], f_ieqcons= e.Constraints_DEP, args= argscons, kwargs={},
     swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=100, minstep=1e-8,
-    minfunc=1e-8, debug=True)
+    minfunc=1e-8, debug=False)
                  
                  
                  
