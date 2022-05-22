@@ -134,8 +134,8 @@ argscons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Vel
 # PSO
 t0 = datetime.now()
 xopt, fopt = pso(e.fobjectivedx, low_bnds, up_bnds, ieqcons=[], f_ieqcons= e.Constraints_DEP, args= argscons, kwargs={},
-    swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=100, minstep=1e-8,
-    minfunc=1e-8, debug=False)
+    swarmsize=10, omega=0.84, phip=0.95, phig=1.6, maxiter=100, minstep=1e-8,
+    minfunc=1e-8, debug=False) # Make constraints a part of the objective function - 
                  
                  
                  
@@ -149,8 +149,6 @@ constraints_calc=e.Constraints_DEP(xopt,*argscons)
 print("\nConstraints")
 print(constraints_calc)
 
-# equation solver in python to compare results
-# see if PSO  and firefly has existing method
 
 
 

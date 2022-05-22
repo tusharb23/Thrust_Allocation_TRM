@@ -39,9 +39,9 @@ inop_eng = 0 # Number of engines that are inoperative
 g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 
 # Constant Flight Parameters
-V = 10   # Velocity (m/s)
+V = 25   # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
+beta = 2 / 180 * math.pi
 gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
@@ -139,9 +139,9 @@ maxit = 100
 tolerance = 1e-5
 # SLSQP is working
 t0 = datetime.now()
-k = minimize(e.fobjectivedx, np.copy(x0), args=dicfobj,method='trust-constr', bounds=bnds,
+k = minimize(e.fobjectivedx, np.copy(x0), args=dicfobj, bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
-                         options={'maxiter': maxit,'verbose': 2, 
+                         options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
 t1 = datetime.now()
 print("Evaluation_time :" , t1-t0)

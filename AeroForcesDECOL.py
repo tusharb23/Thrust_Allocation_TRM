@@ -147,7 +147,6 @@ def CalcForce_aeroframe_DEP(V, CoefMatrix, x, Tc, atmo, g, PropWing):
     M = np.dot(CoefMatrix[3:6, :], x)
 
     DragQuad = F[0] + g.Cda*x[0]**2 + g.Cdb * x[0] + g.Cdc
-
     g.Cm_alpha_aero_interaction = Cm_alpha(V, CoefMatrix, x, Tc, atmo, g, PropWing)
 
     if g.IsPropWing:

@@ -554,21 +554,6 @@ class PropWing:
                 self.mu[i]=2*myw[i]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         # Compute AoA modification due to flaps
         if plane.isflap:
             alpha_fl = aoa - self.alpha0_fl * dfl

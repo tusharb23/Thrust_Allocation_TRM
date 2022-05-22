@@ -79,7 +79,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     A[3:6] = np.array([Mx_aero[0], Mx_aero[1], Mx_aero[2]])+F[3:6]
 
     """To ensure that the constraints are well satisfied, the constraints are modelled as inequality constraints with a tolerance for constraints as 10^-5"""
-    return np.ones(6)*2.5e-9 - np.dot(A,A)  
+    return (np.ones(6)*2.5e-9 - np.dot(A,A))  
 
 def fobjectivePower(x, fix, rho, g):
     
@@ -89,7 +89,7 @@ def fobjectivePower(x, fix, rho, g):
     return Power
 
 def fobjectivedx(x, fix, Coef, atmo, g, PW):
-    J = np.sum(x[-g.N_eng:]**2)
+    J = np.sum(x[-g.N_eng:]**2)/8;
     return J
 
 def fobjectivePropWingInterac(x, fix, rho, g):
