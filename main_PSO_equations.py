@@ -112,9 +112,6 @@ def main():
     initial = [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
     k = pso.minimize(fix, CoefMatrix, atmo, g, PW)
     print(k)
-    initial =  [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
-    solution = pso.solve(initial, k, fix, CoefMatrix, atmo, g, PW)
-    print(solution)
     
     
     

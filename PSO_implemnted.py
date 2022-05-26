@@ -100,11 +100,12 @@ def solve(initial, x, fix, CoefMatrix, atmo, g, PropWing):
 
 def fitness(x, fix, CoefMatrix, atmo, g, PropWing):
     
-    #fitness = 0
+    fitness = 0
     initial =  [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
     z = solve(initial,  x, fix, CoefMatrix, atmo, g, PropWing)
+    print(z)
     # Add fitness for the bound values not being satisfied for alpha, p, q, r, phi, theta, da, de, dr and dx[7]
-    """if z[0]<-2*math.pi/180 or z[0]> 8*math.pi/180:
+    if z[0]<-2*math.pi/180 or z[0]> 8*math.pi/180:
         fitness += 100
     if z[1]<-0.2 or z[1]> 0.2:
         fitness += 100
@@ -123,12 +124,12 @@ def fitness(x, fix, CoefMatrix, atmo, g, PropWing):
     if z[8]<-25*math.pi/180 or z[8]> 25*math.pi/180:
         fitness += 100
     if z[9]<0.1 or z[9]> 1:
-        fitness += 100"""
+        fitness += 100
     x = np.array(x)
     dx = np.zeros(8)
     dx[0:7] = x
     dx[7] = z[9]
-    fitness = np.sum(dx**2)# Square of thrust fraction of each engine
+    fitness += np.sum(dx**2)# Square of thrust fraction of each engine
     return fitness
 
 
@@ -198,7 +199,7 @@ class Particle():
                 self.position_i[i]=bounds[i][0]
 
 #def pso(fix, CoefMatrix, atmo, g, PropWing):
-def minimize( fix, CoefMatrix, atmo, g, PropWing, fitness = fitness, inds = x, bounds = bounds, num_particles = num_particles, maxiter = 10, verbose=False):
+def minimize( fix, CoefMatrix, atmo, g, PropWing, fitness = fitness, inds = x, bounds = bounds, num_particles = num_particles, maxiter = 100, verbose=False):
     global num_dimensions
 
     num_dimensions=len(x[0])
@@ -214,18 +215,21 @@ def minimize( fix, CoefMatrix, atmo, g, PropWing, fitness = fitness, inds = x, b
     i=0
     while i<maxiter:
         if i%50 == 0 & i!=0:
-            print(f"{i} epochs done.")
-            
-        # Add a criteria to end the search
+            print(f"{i} epochs done.")       
             
         # cycle through particles in swarm and evaluate fitness
         for j in range(0,num_particles):
             swarm[j].evaluate(fitness,fix, CoefMatrix, atmo, g, PropWing)
 
             # determine if current particle is the best (globally)
-            if swarm[j].err_i<err_best_g or err_best_g==-1:
+            # While adding an ending criteria, compare it with the case when DEP is not used
+            if swarm[j].err_best_i<err_best_g or err_best_g==-1:
                 pos_best_g=list(swarm[j].position_i)
-                err_best_g=float(swarm[j].err_i)
+                if (err_best_g - swarm[j].err_best_i) < 1e-8 and err_best_g != -1:
+                    i = maxiter
+                    
+                err_best_g=float(swarm[j].err_best_i)     
+                print("check:", err_best_g)
         
         # cycle through swarm and update velocities and position
         for j in range(0,num_particles):
