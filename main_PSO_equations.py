@@ -109,9 +109,14 @@ def main():
         omega = V * math.cos(gamma) / R
     # Implement the PSO Algorithm
     fix = np.array([V, beta, gamma, omega])
+    initial = [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
     k = pso.minimize(fix, CoefMatrix, atmo, g, PW)
     print(k)
-      
+    initial =  [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
+    solution = pso.solve(initial, k, fix, CoefMatrix, atmo, g, PW)
+    print(solution)
+    
+    
     
 if __name__=='__main__':
     main()

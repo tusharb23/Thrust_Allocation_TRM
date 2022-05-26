@@ -22,6 +22,14 @@ import ReadFileUtils
 import equation as e
 import PattersonAugmented as PA
 
+
+"""Create a function to compare when no DEP to define whether optimization required
+    Analyze for different flight envelopes and graphs
+    PAtterson Augmented
+    Engines being Inoperative
+    Time Analysis"""
+
+
 # Atmospheric conditions for H = 0m
 H = 0 # Altitude(m)
 a = 340.3 # Velocity of Sound at 0m
