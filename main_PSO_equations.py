@@ -42,7 +42,7 @@ def main():
     g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
     
     # Constant Flight Parameters
-    V = 23.5   # Velocity (m/s)
+    V = 20 # Velocity (m/s)
     M = V/a
     beta = 0 / 180 * math.pi
     gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
@@ -80,7 +80,7 @@ def main():
     Matrix = np.copy(MatrixNoFin)
     CoefMatrix=g.NicolosiCoef(Matrix[:, 1:], Mach)
     Coef_base = AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocities)
-    g.Matrix_no_tail_terms = AeroForcesDECOL.CoefInterpol(V, Matrix[:, 1:], Velocities)
+    g.Matrix_no_tail_terms = AeroForcesDECOL.CoefInterpol(M, Matrix[:, 1:], Velocities)
     g.PolarFlDeflDeg = 5
     g.PolarAilDeflDeg = 5
     PropPath = "DECOL_FEM/"
@@ -109,7 +109,6 @@ def main():
         omega = V * math.cos(gamma) / R
     # Implement the PSO Algorithm
     fix = np.array([V, beta, gamma, omega])
-    initial = [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4] 
     k = pso.minimize(fix, CoefMatrix, atmo, g, PW)
     print(k)
     

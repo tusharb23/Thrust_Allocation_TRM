@@ -17,7 +17,7 @@ from scipy.optimize import fsolve
 
 import AeroForcesDECOL
 
-num_particles = 5 # Number of swarm particles
+num_particles = 7 # Number of swarm particles
 num_dimensions = 7 # Parameters owned by each dimension 
 
 """
@@ -86,9 +86,9 @@ def function(initial, x, fix, CoefMatrix, atmo, g, PropWing):
     A[2]=-(np.sin(beta)*(p*np.cos(alpha)+r*np.sin(alpha))-q*np.cos(beta))/np.cos(beta)+ 9.81*cosbank/(V*np.cos(beta)) + F[2]/(g.m*V*np.cos(beta))+Fx_aero[2]/(g.m*V*np.cos(beta))
     A[3:6] = np.dot(inv(I), np.array([Mx_aero[0], Mx_aero[1], Mx_aero[2]])+F[3:6]-np.cross(np.array([p, q, r]), np.dot(I, np.array([p, q, r]))))
     A[6]=p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta)
-    A[7]=q*math.cos(phi) -r*math.sin(phi) #--- as 9 equations needed for 9 variables that need to be solved by the equaions. Define and check these equations in a different file to compare the power with same thrust on all engines
+    A[7]=q*math.cos(phi) -r*math.sin(phi)
     A[8]=-np.sin(gamma)+np.cos(alpha)*np.cos(beta)*np.sin(theta)-np.sin(beta)*np.sin(phi)*np.cos(theta)-np.sin(alpha)*np.cos(beta)*np.cos(phi)*np.cos(theta)
-    A[8]=-omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta)
+    A[9]=-omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta)
     
     
     # Add dx equal constraint in longitudinal flight and add inoperative engine condition
@@ -175,9 +175,9 @@ class Particle():
             
     def update_velocity(self,pos_best_g):
         """Tune these values to improve model performance"""
-        w=0.84       # constant inertia weight (how much to weigh the previous velocity)
-        c1=0.95      # cognitive constant
-        c2=1.6       # social constant
+        w=0.50       # constant inertia weight (how much to weigh the previous velocity)
+        c1=1     # cognitive constant
+        c2=2     # social constant
         
         for i in range(0,num_dimensions):
             r1=rnd.random()
@@ -225,7 +225,7 @@ def minimize( fix, CoefMatrix, atmo, g, PropWing, fitness = fitness, inds = x, b
             # While adding an ending criteria, compare it with the case when DEP is not used
             if swarm[j].err_best_i<err_best_g or err_best_g==-1:
                 pos_best_g=list(swarm[j].position_i)
-                if (err_best_g - swarm[j].err_best_i) < 1e-8 and err_best_g != -1:
+                if (err_best_g - swarm[j].err_best_i) < 1e-3 and err_best_g != -1:
                     i = maxiter
                     
                 err_best_g=float(swarm[j].err_best_i)     
