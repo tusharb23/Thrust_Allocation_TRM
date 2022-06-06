@@ -14,7 +14,8 @@ import scipy.linalg
 import scipy.io #input/output with matlab
 from scipy.optimize import  minimize
 from datetime import datetime
-
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 # Import DECOL packages
 import AeroForcesDECOL
 import DECOLgeometry
@@ -47,9 +48,9 @@ inop_eng = 0 # Number of engines that are inoperative
 g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 
 # Constant Flight Parameters
-V = 25   # Velocity (m/s)
+V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 2 / 180 * math.pi
+beta = 0 / 180 * math.pi
 gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
@@ -58,17 +59,17 @@ g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2
 ThrottleMax = 1  
 ThrottleMin = 0.0001  
     # Control Surface Constraints 
-deltaAMin = -20*math.pi/180 # Ailerons
-deltaAMax = 20*math.pi/180
+deltaAMin = -30*math.pi/180 # Ailerons
+deltaAMax = 30*math.pi/180
 deltaEMin = -20*math.pi/180 # Elevators
 deltaEMax = 20*math.pi/180
-deltaRMin = -25*math.pi/180 # Rudder
-deltaRMax = 25*math.pi/180
+deltaRMin = -30*math.pi/180 # Rudder
+deltaRMax = 30*math.pi/180
     # Angle Constraints
-alphaMin = -2*math.pi/180
-alphaMax = 8*math.pi/180
-phiMin = -30*math.pi/180
-phiMax = 30*math.pi/180
+alphaMin = -5*math.pi/180
+alphaMax = 25*math.pi/180
+phiMin = -10*math.pi/180
+phiMax = 10*math.pi/180
 thetaMin = -30*math.pi/180
 thetaMax = 30*math.pi/180
                                                                           
@@ -145,9 +146,9 @@ diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velo
 dicfobj = (np.copy(fixtest), rho, g)
 maxit = 100
 tolerance = 1e-5
-# SLSQP is working
-t0 = datetime.now()
-k = minimize(e.fobjectivedx, np.copy(x0), args=dicfobj, bounds=bnds,
+# TRM is working
+"""t0 = datetime.now()
+k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
@@ -181,17 +182,114 @@ def printx(x, fix, atmo, g, PW):
         print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
 
 printx(k.x, fixtest, atmo,g,PW)
-
+print(k.fun)
 # check if constraints are validated
 constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
-print(constraints_calc)
+print(constraints_calc)"""
 
-# equation solver in python to compare results
-# see if PSO  and firefly has existing method
+# To plot graphs in python - discuss values and constraints
+# Engine thrust distribution, alpha vs v and save the values of functions and plot constr_violation and execution_time
+#color = ['tomato', 'salmon', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'orangered', 'red']
+color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'slateblue']
+#Velocities = [10, 12, 15, 17, 20, 23, 25, 27, 30, 33, 35]
+gammas = [-3, -1, -2, 0, 1, 2, 3, 4, 5]
+alpha = np.zeros(11)
+de = np.zeros(11)
+function_val = np.zeros(11)
+#constraints_viol = np.zeros(11)
+#exec_time = np.zeros(11)
+
+"""plt.figure(1)
+for i in  range(len(Velocities)):
+    fixtest[0] = Velocities[i]
+    diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
+    dicfobj = (np.copy(fixtest), rho, g)
+    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
+                         constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
+                         options={'maxiter': maxit, 
+                                  'disp': True}, tol=tolerance)
+    dx = k.x[9:]
+    x = [1, 2, 3, 4, 5, 6, 7, 8]
+    #plt.plot(x, dx, color[i] , label = '%s'% Velocities[i]+'m/s')
+    alpha[i] = k.x[0]*180/math.pi
+    de[i] = k.x[7]*180/math.pi
+    function_val[i] = k.fun
+    #constraints_viol = k.constr_violation
+    #exec_time = k.execution_time
+    
+plt.xlabel("Engine")
+plt.ylabel("dx")
+plt.legend(loc = 'upper right', fontsize = "xx-small")
+ 
+plt.figure(2)  
+plt.plot(Velocities[1:-2], alpha[1:-2], 'b' )
+plt.xlabel("Velocity in m/s")
+plt.ylabel("Alpha in degrees")
+
+plt.figure(3)  
+plt.plot(Velocities[1:-2], de[1:-2], 'b' )
+plt.xlabel("Velocity in m/s")
+plt.ylabel("Elevator deflection in degrees")
+plt.show
+    
+
+np.save("Function_SLSQP_e.npy", function_val)
+#np.save("Constraints.npy", constraints_viol)
+#np.save("time.npy", exec_time)"""
+    
+
+"""f_TRM = np.load('Function_TRM_1.npy')
+f_SLSQP = np.load('Function_SLSQP_1.npy')
+f_SLSQP_e = np.load('Function_SLSQP_e.npy')
+f_TRM_e = np.load('Function_TRM_e.npy')
+print(f_TRM)
+print(f_SLSQP)
+print(f_SLSQP_e)
+print(f_TRM_e)
 
 
+plt.figure(1)
+plt.plot(Velocities,f_TRM, 'bo', label ='With DEP')
+plt.plot(Velocities, f_TRM_e, 'ro', label ='With equal thrust')
+plt.xlabel("Velocity in m/s")
+plt.ylabel("Power Consumption")
+plt.legend(loc = 'lower right', fontsize = "xx-small")
 
+plt.figure(2)
+plt.plot(Velocities,f_SLSQP, 'bo', label ='With DEP')
+plt.plot(Velocities, f_SLSQP_e, 'ro', label ='With equal thrust')
+plt.xlabel("Velocity in m/s")
+plt.ylabel("Power Consumption")
+plt.legend(loc = 'lower right', fontsize = "xx-small")"""
+
+
+# Plotting, thrust distribution for different gamma values and comparing the power consumption
+plt.figure(1)
+for i in  range(len(gammas)):
+    fixtest[2] = gammas[i]
+    diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
+    dicfobj = (np.copy(fixtest), rho, g)
+    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method='trust-constr', bounds=bnds,
+                         constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
+                         options={'maxiter': maxit, 
+                                  'disp': True}, tol=tolerance)
+    dx = k.x[9:]
+    x = [1, 2, 3, 4, 5, 6, 7, 8]
+    plt.plot(x, dx, color[i] , label = '%s'% gammas[i])
+    alpha[i] = k.x[0]*180/math.pi
+    de[i] = k.x[7]*180/math.pi
+    function_val[i] = k.fun
+    #constraints_viol = k.constr_violation
+    #exec_time = k.execution_time
+    
+plt.xlabel("Engine")
+plt.ylabel("dx")
+plt.legend(loc = 'upper right', fontsize = "xx-small")
+ 
+np.save('Function_TRM_2.npy', function_val) 
+
+    
 
 
 

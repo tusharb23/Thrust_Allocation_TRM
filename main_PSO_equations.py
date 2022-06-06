@@ -45,8 +45,8 @@ def main():
     V = 20 # Velocity (m/s)
     M = V/a
     beta = 0 / 180 * math.pi
-    gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
-    R = 0  # in meters the turn radius
+    gamma = 2 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
+    R = 1  # in meters the turn radius
     g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
 
     # Constraints 
