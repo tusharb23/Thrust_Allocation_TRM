@@ -48,8 +48,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
            [-np.cos(alpha)*np.sin(beta), np.cos(beta), -np.sin(alpha)*np.sin(beta)],
            [-np.sin(alpha), 0, np.cos(alpha)]]
     Fx_aero = np.matmul(Tab,Fx_body)
-    Fx = np.sum(Fx_body)
-    Mt = Tab @ Mx
+    Mx_aero = Tab @ Mx
     
     # Convert thrust in Tc for patterson
     Tc = g.DefaultProp(x[-g.N_eng:],V_vect)/(2*rho*g.Sp*V**2)   
@@ -71,20 +70,20 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     A8 = gamma
     A9 = Omega
     """
-    A[0] = -9.81*np.sin(gamma)+F[0]/g.m+Fx*np.cos(alpha+g.alpha_i+g.alpha_0+g.ip)*np.cos(beta)/g.m
-    A[1] = (p*np.sin(alpha) - r*np.cos(alpha))+g.m*9.81*sinbank/(g.m*V) + F[1]/(g.m*V)-Fx*np.cos(alpha)*np.sin(beta)/(g.m*V)
-    A[2] = -(np.sin(beta)*(p*np.cos(alpha)+r*np.sin(alpha))-q*np.cos(beta))/np.cos(beta) + 9.81*cosbank/(V*np.cos(beta)) + F[2]/(g.m*V*np.cos(beta))-Fx*np.sin(alpha+g.alpha_i+g.alpha_0+g.ip)/(g.m*V*np.cos(beta))
-    A[3:6] = np.dot(inv(I), np.array([Mt[0], Mt[1], Mt[2]])+F[3:6]-np.cross(np.array([p, q, r]), np.dot(I, np.array([p, q, r]))))
-    A[6] = p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta)
-    A[7] = q*math.cos(phi) - r * math.sin(phi)
-    A[8] = -np.sin(gamma)+np.cos(alpha)*np.cos(beta)*np.sin(theta)-np.sin(beta)*np.sin(phi)*np.cos(theta)-np.sin(alpha)*np.cos(beta)*np.cos(phi)*np.cos(theta)
-    A[9] = -omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta)
+    A[0]=-9.81*np.sin(gamma)+F[0]/g.m+Fx_aero[0]/g.m
+    A[1]=(p*np.sin(alpha) - r*np.cos(alpha))+g.m*9.81*sinbank/(g.m*V) + F[1]/(g.m*V) + Fx_aero[1]/(g.m*V)
+    A[2]=-(np.sin(beta)*(p*np.cos(alpha)+r*np.sin(alpha))-q*np.cos(beta))/np.cos(beta)+ 9.81*cosbank/(V*np.cos(beta)) + F[2]/(g.m*V*np.cos(beta))+Fx_aero[2]/(g.m*V*np.cos(beta))
+    A[3:6] = np.dot(inv(I), np.array([Mx_aero[0], Mx_aero[1], Mx_aero[2]])+F[3:6]-np.cross(np.array([p, q, r]), np.dot(I, np.array([p, q, r]))))
+    A[6]=p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta)
+    A[7]=q*math.cos(phi) -r*math.sin(phi)
+    A[8]=-np.sin(gamma)+np.cos(alpha)*np.cos(beta)*np.sin(theta)-np.sin(beta)*np.sin(phi)*np.cos(theta)-np.sin(alpha)*np.cos(beta)*np.cos(phi)*np.cos(theta)
+    A[9]=-omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta)
 
     #if beta  0, make all the thrust equal
     
     for i in range(g.inop):
         A[-1-i]=x[-1-i]
-    """if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
+    '''if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
         #no DEP with original twin or N engines; all engines have the same thrust
         D = np.copy(A)
         for i in range(g.N_eng-g.inop-1):
@@ -92,7 +91,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
             D = np.append(D, [AAd])
         return D
     else:
-        return A"""
+        return A'''
     return A
 
 def fobjectivePower(x, fix, rho, g):

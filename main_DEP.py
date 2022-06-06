@@ -264,7 +264,7 @@ plt.ylabel("Power Consumption")
 plt.legend(loc = 'lower right', fontsize = "xx-small")"""
 
 
-# Plotting, thrust distribution for different gamma values and comparing the power consumption
+#Plotting, thrust distribution for different gamma values and comparing the power consumption
 plt.figure(1)
 for i in  range(len(gammas)):
     fixtest[2] = gammas[i]
@@ -287,7 +287,7 @@ plt.xlabel("Engine")
 plt.ylabel("dx")
 plt.legend(loc = 'upper right', fontsize = "xx-small")
  
-np.save('Function_TRM_2.npy', function_val) 
+np.save('Function_TRM_2.npy', function_val)
 
     
 
