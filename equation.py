@@ -83,7 +83,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     
     for i in range(g.inop):
         A[-1-i]=x[-1-i]
-    '''if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
+    if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
         #no DEP with original twin or N engines; all engines have the same thrust
         D = np.copy(A)
         for i in range(g.N_eng-g.inop-1):
@@ -91,7 +91,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
             D = np.append(D, [AAd])
         return D
     else:
-        return A'''
+        return A
     return A
 
 def fobjectivePower(x, fix, rho, g):

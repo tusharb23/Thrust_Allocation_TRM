@@ -38,10 +38,10 @@ rho = 1.225 # Density of air at sea level as obtained from si2py.txt -> Eric Ngu
 atmo = [a, rho]
 
 # Used to obtain Aerodynamic Coefficients at different velocities 
-Velocities=(10,15,20,25,30,35)
+Velocity=(10,15,20,25,30,35)
 rho_vec=(1.225,1.225,1.225,1.225,1.225,1.225)
 # Mach = [v/a for v in list(Velocities)]
-Mach=np.ones((len(Velocities),1))*0.0001 # To have incompressible flow as the speds are considered very low
+Mach=np.ones((len(Velocity),1))*0.0001 # To have incompressible flow as the speds are considered very low
 
 # Define DECOL Parameters
 inop_eng = 0 # Number of engines that are inoperative
@@ -93,7 +93,7 @@ filenameNoFin = [path + '_FinLess_Vinf10000.stab',
                  path + '_FinLess_Vinf35000.stab']
 MatrixNoFin = ReadFileUtils.ReadStabCoef(filenameNoFin)
 CoefMatrix=g.NicolosiCoef(MatrixNoFin[:,1:], Mach)
-Coef=AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocities)
+Coef=AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocity)
 
 # Defining the Propulsion & Wing Interaction
 g.PolarFlDeflDeg = 5
@@ -111,7 +111,7 @@ PW.AoAZero[:,1] = PW.AoAZero[:,1]*10**(-6)
 PW.CLslope[:,1] = PW.CLslope[:,1]*10**(-6)         # In order to express in S.I. units as DECOL.vsp3 yields in mm
 PW.AoAZero[:,2] = PW.AoAZero[:,2]*10**(-3)
 PW.CLslope[:,2] = PW.CLslope[:,2]*10**(-3)
-PW.DeltaCL_a_0 = 1 #CL_alpha correction factor
+PW.DeltaCL_a_0 = 1 #CL_alpha correction factor"""
 
 g.nofin = False
 g.DisplayPatterInfo = False
@@ -147,8 +147,8 @@ dicfobj = (np.copy(fixtest), rho, g)
 maxit = 100
 tolerance = 1e-5
 # TRM is working
-"""t0 = datetime.now()
-k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
+t0 = datetime.now()
+k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method = 'trust-constr', bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
@@ -186,23 +186,55 @@ print(k.fun)
 # check if constraints are validated
 constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
-print(constraints_calc)"""
+print(constraints_calc)
 
 # To plot graphs in python - discuss values and constraints
 # Engine thrust distribution, alpha vs v and save the values of functions and plot constr_violation and execution_time
 #color = ['tomato', 'salmon', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'orangered', 'red']
 color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'slateblue']
 #Velocities = [10, 12, 15, 17, 20, 23, 25, 27, 30, 33, 35]
-gammas = [-3, -1, -2, 0, 1, 2, 3, 4, 5]
-alpha = np.zeros(11)
-de = np.zeros(11)
-function_val = np.zeros(11)
+gammas = [-10, -5, 0, 2, 5, 7, 10, 15, 20]
+#alpha = np.zeros(11)
+#de = np.zeros(11)
+function_val = np.zeros(9)
 #constraints_viol = np.zeros(11)
 #exec_time = np.zeros(11)
 
 """plt.figure(1)
 for i in  range(len(Velocities)):
-    fixtest[0] = Velocities[i]
+    
+    path = 'DECOL_STAB/'  
+    filenameNoFin = [path + '_FinLess_Vinf10000.stab',
+                 path + '_FinLess_Vinf15000.stab',
+                 path + '_FinLess_Vinf20000.stab',
+                 path + '_FinLess_Vinf25000.stab',
+                 path + '_FinLess_Vinf30000.stab',
+                 path + '_FinLess_Vinf35000.stab']
+    MatrixNoFin = ReadFileUtils.ReadStabCoef(filenameNoFin)
+    CoefMatrix=g.NicolosiCoef(MatrixNoFin[:,1:], Mach)
+    Coef=AeroForcesDECOL.CoefInterpol(Velocities[i], CoefMatrix, Velocity)
+
+    # Defining the Propulsion & Wing Interaction
+    g.PolarFlDeflDeg = 5
+    g.PolarAilDeflDeg = 5
+    PropPath = "DECOL_FEM/"
+    PropFilenames = {'fem':[PropPath+"_FinLess_Vinf10000.0"],
+                 'AirfoilPolar':PropPath+"S3010_XTr10_Re350.txt",
+                 'FlapPolar':PropPath+"S3010_XTr10_Re350_fl5.txt",
+                 'AileronPolar':PropPath+"S3010_XTr10_Re350_fl5.txt"} # format for prop file : [[Cldist=f(M)],polar clean airfoil, polar flap, polar aile]
+    PW = PA.PropWing(g,PropFilenames)
+    #PW.AoAZero[:,-1] = PW.AoAZero[:,-1] + 3.2/180*np.pi # Correction for angle of incidence of wing
+    PW.AoAZero[:,0] = PW.AoAZero[:,0]*10**(-3)
+    PW.CLslope[:,0] = PW.CLslope[:,0]*10**(-3)
+    PW.AoAZero[:,1] = PW.AoAZero[:,1]*10**(-6)
+    PW.CLslope[:,1] = PW.CLslope[:,1]*10**(-6)         # In order to express in S.I. units as DECOL.vsp3 yields in mm
+    PW.AoAZero[:,2] = PW.AoAZero[:,2]*10**(-3)
+    PW.CLslope[:,2] = PW.CLslope[:,2]*10**(-3)
+    PW.DeltaCL_a_0 = 1 #CL_alpha correction factor
+    
+    
+    
+    fixtest = np.array([Velocities[i], beta, gamma, omega])
     diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
     dicfobj = (np.copy(fixtest), rho, g)
     k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
@@ -211,7 +243,7 @@ for i in  range(len(Velocities)):
                                   'disp': True}, tol=tolerance)
     dx = k.x[9:]
     x = [1, 2, 3, 4, 5, 6, 7, 8]
-    #plt.plot(x, dx, color[i] , label = '%s'% Velocities[i]+'m/s')
+    plt.plot(x, dx, color[i] , label = '%s'% Velocities[i]+'m/s')
     alpha[i] = k.x[0]*180/math.pi
     de[i] = k.x[7]*180/math.pi
     function_val[i] = k.fun
@@ -265,20 +297,20 @@ plt.legend(loc = 'lower right', fontsize = "xx-small")"""
 
 
 #Plotting, thrust distribution for different gamma values and comparing the power consumption
-plt.figure(1)
+"""plt.figure(1)
 for i in  range(len(gammas)):
-    fixtest[2] = gammas[i]
+    fixtest = np.array([V, beta, (gammas[i]/180 * np.pi), omega])
     diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
     dicfobj = (np.copy(fixtest), rho, g)
-    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method='trust-constr', bounds=bnds,
+    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
     dx = k.x[9:]
     x = [1, 2, 3, 4, 5, 6, 7, 8]
     plt.plot(x, dx, color[i] , label = '%s'% gammas[i])
-    alpha[i] = k.x[0]*180/math.pi
-    de[i] = k.x[7]*180/math.pi
+    #alpha[i] = k.x[0]*180/math.pi
+    #de[i] = k.x[7]*180/math.pi
     function_val[i] = k.fun
     #constraints_viol = k.constr_violation
     #exec_time = k.execution_time
@@ -287,7 +319,7 @@ plt.xlabel("Engine")
 plt.ylabel("dx")
 plt.legend(loc = 'upper right', fontsize = "xx-small")
  
-np.save('Function_TRM_2.npy', function_val)
+np.save('Function_TRM_2.npy', function_val)"""
 
     
 
