@@ -50,11 +50,11 @@ g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 # Constant Flight Parameters
 V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
+beta = 5 / 180 * math.pi
 gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
-g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
-
+g.P_var = 8 * 14.4 * 4  # I*V*N_eng/    
+ 
 # Constraints 
 ThrottleMax = 1  
 ThrottleMin = 0.0001  
@@ -147,8 +147,8 @@ dicfobj = (np.copy(fixtest), rho, g)
 maxit = 100
 tolerance = 1e-5
 # TRM is working
-t0 = datetime.now()
-k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method = 'trust-constr', bounds=bnds,
+"""t0 = datetime.now()
+k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method='trust-constr', bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
@@ -188,21 +188,53 @@ constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
 print(constraints_calc)
 
+np.save("Inop_TRM_1.npy", k[9:])"""
+
+
 # To plot graphs in python - discuss values and constraints
 # Engine thrust distribution, alpha vs v and save the values of functions and plot constr_violation and execution_time
 #color = ['tomato', 'salmon', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'orangered', 'red']
-color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'slateblue']
+color = ['red', 'blue', 'yellow', 'green']
+#color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'slateblue']
 #Velocities = [10, 12, 15, 17, 20, 23, 25, 27, 30, 33, 35]
-gammas = [-10, -5, 0, 2, 5, 7, 10, 15, 20]
+#gammas = [-10, -5, 0, 2, 5, 7, 10, 15, 20]
+#R = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+#x = [1, 2, 3, 4, 5, 6, 7, 8]
+#beta = [-15, 10, -5, 0, 5, 10, 15, 20, 25]
 #alpha = np.zeros(11)
 #de = np.zeros(11)
-function_val = np.zeros(9)
+#da = np.zeros(9)
+#dr = np.zeros(9)
+#phi = np.zeros(9) 
+function_val = np.zeros(3)
 #constraints_viol = np.zeros(11)
 #exec_time = np.zeros(11)
+case_name = ["aileron", "elevator", "rudder"]
+case = [1, 2, 3]
 
-"""plt.figure(1)
-for i in  range(len(Velocities)):
+"""def printx(x, fix, atmo, g, PW):
+    V = fix[0]
+    alpha = x[0]/math.pi*180
+    beta = fix[1]/math.pi*180
+    pqr = x[1:4]/math.pi*180
+    phi = x[4]/math.pi*180
+    theta = x[5]/math.pi*180
+    da = x[6]/math.pi*180
+    de = x[7]/math.pi*180
     
+    print("\nState vector value:")
+    print("V= {0:0.2f}m/s, alpha = {1:0.2f}\xb0, beta={2:0.2f}\xb0, phi={3:0.2f}\xb0, theta={4:0.2f}\xb0".format(V, alpha, beta, phi, theta))
+    print("p={0:0.4f}\xb0/s q={1:0.4f}\xb0/s r={2:0.4f}\xb0/s".format(*pqr))
+    print("da={0:0.2f}\xb0, de= {1:0.2f}\xb0".format(da,de))
+
+    if g.nofin==False:
+        print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
+
+plt.figure(1)
+for i in  range(3):
+    
+    
+    g.inop = case[i]
     path = 'DECOL_STAB/'  
     filenameNoFin = [path + '_FinLess_Vinf10000.stab',
                  path + '_FinLess_Vinf15000.stab',
@@ -212,7 +244,7 @@ for i in  range(len(Velocities)):
                  path + '_FinLess_Vinf35000.stab']
     MatrixNoFin = ReadFileUtils.ReadStabCoef(filenameNoFin)
     CoefMatrix=g.NicolosiCoef(MatrixNoFin[:,1:], Mach)
-    Coef=AeroForcesDECOL.CoefInterpol(Velocities[i], CoefMatrix, Velocity)
+    Coef=AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocity)
 
     # Defining the Propulsion & Wing Interaction
     g.PolarFlDeflDeg = 5
@@ -234,7 +266,7 @@ for i in  range(len(Velocities)):
     
     
     
-    fixtest = np.array([Velocities[i], beta, gamma, omega])
+    fixtest = np.array([V, beta, gamma, omega])
     diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
     dicfobj = (np.copy(fixtest), rho, g)
     k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
@@ -243,18 +275,26 @@ for i in  range(len(Velocities)):
                                   'disp': True}, tol=tolerance)
     dx = k.x[9:]
     x = [1, 2, 3, 4, 5, 6, 7, 8]
-    plt.plot(x, dx, color[i] , label = '%s'% Velocities[i]+'m/s')
-    alpha[i] = k.x[0]*180/math.pi
-    de[i] = k.x[7]*180/math.pi
+    plt.plot(x, dx, color[i] , label = case_name[i])
+    #alpha[i] = k.x[0]*180/math.pi
+    #de[i] = k.x[7]*180/math.pi
     function_val[i] = k.fun
     #constraints_viol = k.constr_violation
     #exec_time = k.execution_time
     
+    constraints_calc=e.Constraints_DEP(k.x,*diccons)
+    printx(k.x, fixtest, atmo,g,PW)
+    print("\nConstraints")
+    print(constraints_calc)
+    
+    
 plt.xlabel("Engine")
 plt.ylabel("dx")
 plt.legend(loc = 'upper right', fontsize = "xx-small")
+
+np.save("CS_SLSQP.npy", function_val)"""
  
-plt.figure(2)  
+"""plt.figure(2)  
 plt.plot(Velocities[1:-2], alpha[1:-2], 'b' )
 plt.xlabel("Velocity in m/s")
 plt.ylabel("Alpha in degrees")
@@ -263,14 +303,14 @@ plt.figure(3)
 plt.plot(Velocities[1:-2], de[1:-2], 'b' )
 plt.xlabel("Velocity in m/s")
 plt.ylabel("Elevator deflection in degrees")
-plt.show
+plt.show"""
     
 
-np.save("Function_SLSQP_e.npy", function_val)
+
+#np.save("Function_beta.npy", function_val)
 #np.save("Constraints.npy", constraints_viol)
-#np.save("time.npy", exec_time)"""
+#np.save("time.npy", exec_time)
     
-
 """f_TRM = np.load('Function_TRM_1.npy')
 f_SLSQP = np.load('Function_SLSQP_1.npy')
 f_SLSQP_e = np.load('Function_SLSQP_e.npy')
@@ -282,36 +322,74 @@ print(f_TRM_e)
 
 
 plt.figure(1)
-plt.plot(Velocities,f_TRM, 'bo', label ='With DEP')
+plt.plot(Velocities,f_TRM, 'bo', label ='With unequal thrust')
 plt.plot(Velocities, f_TRM_e, 'ro', label ='With equal thrust')
+plt.plot(Velocities, f_SLSQP_e, 'go', label ='With dx^2 as objective')
 plt.xlabel("Velocity in m/s")
 plt.ylabel("Power Consumption")
 plt.legend(loc = 'lower right', fontsize = "xx-small")
 
 plt.figure(2)
-plt.plot(Velocities,f_SLSQP, 'bo', label ='With DEP')
-plt.plot(Velocities, f_SLSQP_e, 'ro', label ='With equal thrust')
-plt.xlabel("Velocity in m/s")
+plt.plot(R,f_SLSQP, 'bo', label ='With unequal thrust')
+plt.plot(R, f_SLSQP_e, 'ro', label ='With equal thrust')
+plt.xlabel("R in m")
 plt.ylabel("Power Consumption")
 plt.legend(loc = 'lower right', fontsize = "xx-small")"""
 
 
-#Plotting, thrust distribution for different gamma values and comparing the power consumption
-"""plt.figure(1)
-for i in  range(len(gammas)):
-    fixtest = np.array([V, beta, (gammas[i]/180 * np.pi), omega])
+#Plotting, thrust distribution for different gamma/omega values and comparing the power consumption
+"""def printx(x, fix, atmo, g, PW):
+    V = fix[0]
+    alpha = x[0]/math.pi*180
+    beta = fix[1]/math.pi*180
+    pqr = x[1:4]/math.pi*180
+    phi = x[4]/math.pi*180
+    theta = x[5]/math.pi*180
+    da = x[6]/math.pi*180
+    de = x[7]/math.pi*180
+    
+    print("\nState vector value:")
+    print("V= {0:0.2f}m/s, alpha = {1:0.2f}\xb0, beta={2:0.2f}\xb0, phi={3:0.2f}\xb0, theta={4:0.2f}\xb0".format(V, alpha, beta, phi, theta))
+    print("p={0:0.4f}\xb0/s q={1:0.4f}\xb0/s r={2:0.4f}\xb0/s".format(*pqr))
+    print("da={0:0.2f}\xb0, de= {1:0.2f}\xb0".format(da,de))
+
+    V_vect = np.ones(g.N_eng) * V * np.cos((-np.sign(g.PosiEng)) * fix[1] + g.wingsweep) - x[3] * g.PosiEng
+
+    if g.IsPropWing:
+        if V <= g.VelFlap:
+            PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], g.FlapDefl, g, False, fix[1], x[1], V, x[3])
+        else:
+            PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], 0, g, False, fix[1], x[1], V, x[3])
+
+    if g.nofin==False:
+        print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
+
+case = [[2], [2,5], [1,7], [3,5,7]]
+plt.figure(1)
+for i in  range(len(case)):
+   
+    g.inop = case[i]
+    fixtest = np.array([V, beta, gamma, omega])
     diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
     dicfobj = (np.copy(fixtest), rho, g)
-    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
+    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj,  method = 'trust-constr', bounds=bnds,
                          constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
+    print(k)
+    constraints_calc=e.Constraints_DEP(k.x,*diccons)
+    print("\nConstraints")
+    print(constraints_calc)
     dx = k.x[9:]
     x = [1, 2, 3, 4, 5, 6, 7, 8]
-    plt.plot(x, dx, color[i] , label = '%s'% gammas[i])
+    plt.plot(x, dx, color[i] , label = '%s'% case[i])
     #alpha[i] = k.x[0]*180/math.pi
     #de[i] = k.x[7]*180/math.pi
     function_val[i] = k.fun
+    printx(k.x, fixtest, atmo,g,PW)
+    #da[i] = k.x[6]*180/math.pi
+    #dr[i] = k.x[8]*180/math.pi
+    #phi[i] =k.x[4]*180/math.pi
     #constraints_viol = k.constr_violation
     #exec_time = k.execution_time
     
@@ -319,10 +397,45 @@ plt.xlabel("Engine")
 plt.ylabel("dx")
 plt.legend(loc = 'upper right', fontsize = "xx-small")
  
-np.save('Function_TRM_2.npy', function_val)"""
+np.save('Inop_SLSQP.npy', function_val)"""
 
+"""plt.figure(2)  
+plt.plot(R[:], da[:], 'b' )
+plt.xlabel("Radius of turn in m")
+plt.ylabel("Aileron deflection in degrees")
+
+plt.figure(3)  
+plt.plot(R[:], dr[:], 'b' )
+plt.xlabel("Radius of turn in m")
+plt.ylabel("Rudder deflection in degrees")
+plt.show
     
+plt.figure(4)  
+plt.plot(R[:], phi[:], 'b' )
+plt.xlabel("Radius of turn in m")
+plt.ylabel("Phi in degrees")
+plt.show"""
+    
+"""plt.figure(1)
+c1 = np.load("Thrust_Case_1.npy")
+c2 = np.load("Thrust_Case_2.npy")
+c3 = np.load("Thrust_Case_3.npy")
+c4 = np.load("Thrust_Case_4.npy")
+c5 = np.load("Thrust_Case_5.npy")
+plt.plot(x, c1, 'b')
+plt.plot(x, c2, 'r')
+plt.plot(x, c3, 'g')
+plt.plot(x, c4, 'y')
+plt.plot(x, c5, 'orange')"""
 
+#case = [1,2,3,4]
+trm = np.load("CS_TRM.npy")
+slsqp = np.load("CS_SLSQP.npy")
+plt.plot(case_name, trm, 'bo', label ="TRM")
+plt.plot(case_name, slsqp, 'go', label = "SLSQP")
+plt.xlabel("Constrol Surface Loss")
+plt.ylabel("Power consumed")
+plt.legend(loc = 'lower right')
 
 
 
