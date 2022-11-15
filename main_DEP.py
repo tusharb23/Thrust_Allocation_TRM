@@ -83,11 +83,6 @@ g.alpha_max_fl = 10 / 180 * np.pi
 
 # FLight measured Cd0:
 g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
-                                                            
-
-Power_minimum = 148*8;
-x_min = np.zeros(17)
-con = np.ones(10)*10e-1
 
 
 path = 'DECOL_STAB/'  
@@ -123,13 +118,13 @@ g.nofin = False
 g.DisplayPatterInfo = False
 
 # x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
-#x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees   
+x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees   
 """x0 = np.array([random.uniform(alphaMin,alphaMax),random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(phiMin,phiMax), random.uniform(thetaMin,thetaMax), random.uniform(deltaAMin,deltaAMax), random.uniform(deltaEMin,deltaEMax), random.uniform(deltaRMin, deltaRMax)])
 eng_vec = np.array([random.uniform(0, 1)] * g.N_eng)
 x0 = np.append(x0, eng_vec)""" # --- Define x0 using the polynomial fit instead for a cruise scenario instead of randomly generated initial points  
 # Using the interpolation algorithm described in AeroForcesDECOL
-x0 = ip.interpolateinitial(V, X)
-print(x0)
+#x0 = ip.interpolateinitial(V, X)
+#print(x0)
     
 bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax), (thetaMin,thetaMax), (deltaAMin,deltaAMax), (deltaEMin,deltaEMax), (deltaRMin, deltaRMax))
 bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
@@ -141,8 +136,8 @@ for i in range(int(g.N_eng / 2)):
 #deltaRmax = 30  # in degree
 #bnds=( (-5*math.pi/180,alphamax*math.pi/180), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (-phimax/180*math.pi,phimax/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-20/180*math.pi,20/180*math.pi), (-deltaRmax/180*math.pi,deltaRmax/180*math.pi))
 # Complete the vectors with engines:
-#eng_vec = np.array([0.4] * g.N_eng)
-#x0 = np.append(x0, eng_vec)
+eng_vec = np.array([0.4] * g.N_eng)
+x0 = np.append(x0, eng_vec)
 ## General formulation:
     
 # --- imposed conditions ---
@@ -167,11 +162,7 @@ k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method = 'trust-const
 t1 = datetime.now()
 print("Evaluation_time :" , t1-t0)
 print(k)
-    
-if np.sum(np.absolute((e.Constraints_DEP(k.x,*diccons))))<np.sum(np.absolute(con)) and  Power_minimum>k.fun:
-            Power_minimum =k.fun
-            x_min = k.x
-            con = e.Constraints_DEP(k.x,*diccons)
+
 
 def printx(x, fix, atmo, g, PW):
         V = fix[0]
