@@ -109,45 +109,5 @@ for i in range(len(Velocities)):
     
 np.save("Initial",X_initial)
 
-def Interpol(V, A1, A2, v1, v2):
-    # Function to interpol any kind of variables in function of the velocity V
-    # input : 
-    # V : current velocity
-    # A1, A2 : lower matrix, higher matrix
-    # v1, v2 : velocities corresponding to matrices
-    a = (A2-A1)/(v2-v1)
-    x0 = A1 + a*(V-v1)
-    return x0
-
-def interpolateinitial(V, X):
-    
-    if V < Velocities[0]:
-        return X[0,:]
-    
-    elif V > Velocities[-1]:
-        return X[-1,:]
-    else:
-        exitcondition = 1
-        length_v = len(Velocities)-1
-        i = 0
-        while exitcondition:
-           
-            if V == Velocities[i]:
-                x0 = X[i,:]
-                exitcondition = 0
-            
-            elif V > Velocities[i] and V < Velocities[i+1]:
-                x0 = Interpol(V, X[i,:], X[i+1,:], Velocities[i], Velocities[i+1])
-                exitcondition = 0  # exit
-            
-            else:
-                i = i+1
-                
-            if i == length_v:  # security to exit the while
-                print("Initial_value : Error in interpolating x0, returning 0")
-                x0 = np.zeros((1,17))
-                exitcondition = 0
-    
-    return x0
 
 
