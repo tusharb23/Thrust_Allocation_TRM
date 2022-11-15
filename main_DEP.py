@@ -16,6 +16,7 @@ from scipy.optimize import  minimize
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import random
 # Import DECOL packages
 import AeroForcesDECOL
 import DECOLgeometry
@@ -50,8 +51,8 @@ g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 # Constant Flight Parameters
 V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
-gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
+beta = 10 / 180 * math.pi
+gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
 
@@ -84,6 +85,20 @@ g.alpha_max_fl = 10 / 180 * np.pi
 g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
                                                             
 # Extracting the aerodynamic coefficients
+#
+#Velocities=(10,12,15,17,20,23,25,27,30,32,35)
+#
+#P = np.zeros(np.size(Velocities))
+#color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'red', 'royalblue', 'navy', 'blue', 'slateblue', 'indigo']
+#plt.Figure()
+#for count in range(np.size(Velocities)):
+#compaare objective function value and constraints
+
+Power_minimum = 148*8;
+x_min = np.zeros(17)
+con = np.ones(10)*10e-1
+
+
 path = 'DECOL_STAB/'  
 filenameNoFin = [path + '_FinLess_Vinf10000.stab',
                  path + '_FinLess_Vinf15000.stab',
@@ -104,7 +119,7 @@ PropFilenames = {'fem':[PropPath+"_FinLess_Vinf10000.0"],
                  'FlapPolar':PropPath+"S3010_XTr10_Re350_fl5.txt",
                  'AileronPolar':PropPath+"S3010_XTr10_Re350_fl5.txt"} # format for prop file : [[Cldist=f(M)],polar clean airfoil, polar flap, polar aile]
 PW = PA.PropWing(g,PropFilenames)
-#PW.AoAZero[:,-1] = PW.AoAZero[:,-1] + 3.2/180*np.pi # Correction for angle of incidence of wing
+    #PW.AoAZero[:,-1] = PW.AoAZero[:,-1] + 3.2/180*np.pi # Correction for angle of incidence of wing
 PW.AoAZero[:,0] = PW.AoAZero[:,0]*10**(-3)
 PW.CLslope[:,0] = PW.CLslope[:,0]*10**(-3)
 PW.AoAZero[:,1] = PW.AoAZero[:,1]*10**(-6)
@@ -117,7 +132,12 @@ g.nofin = False
 g.DisplayPatterInfo = False
 
 # x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
-x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
+    #x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
+   
+"""x0 = np.array([random.uniform(alphaMin,alphaMax),random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(phiMin,phiMax), random.uniform(thetaMin,thetaMax), random.uniform(deltaAMin,deltaAMax), random.uniform(deltaEMin,deltaEMax), random.uniform(deltaRMin, deltaRMax)])
+eng_vec = np.array([random.uniform(0, 1)] * g.N_eng)
+x0 = np.append(x0, eng_vec)""" # --- Define x0 using the polynomial fit instead for a cruise scenario instead of randomly generated initial points  
+    
 bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax), (thetaMin,thetaMax), (deltaAMin,deltaAMax), (deltaEMin,deltaEMax), (deltaRMin, deltaRMax))
 #Constrains Used by Eric & David
 #phimax = 10  # in degree the max bank angle authorized
@@ -126,19 +146,19 @@ bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax),
 #bnds=( (-5*math.pi/180,alphamax*math.pi/180), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (-phimax/180*math.pi,phimax/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-20/180*math.pi,20/180*math.pi), (-deltaRmax/180*math.pi,deltaRmax/180*math.pi))
 
 # Complete the vectors with engines:
-eng_vec = np.array([0.4] * g.N_eng)
-x0 = np.append(x0, eng_vec)
+    #eng_vec = np.array([0.4] * g.N_eng)
+    #x0 = np.append(x0, eng_vec)
 ## General formulation:
 bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
 for i in range(int(g.N_eng / 2)):
-    bnds = bnds + bnds_eng
+        bnds = bnds + bnds_eng
     
 # --- imposed conditions ---
 # fix = [V, beta, gamma, omega, H]
 if R == 0:
-    omega = 0
+        omega = 0
 else:
-    omega = V * math.cos(gamma) / R
+        omega = V * math.cos(gamma) / R
 
 fixtest = np.array([V, beta, gamma, omega])
 # put everything in tuples for passing to functions
@@ -155,181 +175,76 @@ k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method = 'trust-const
 t1 = datetime.now()
 print("Evaluation_time :" , t1-t0)
 print(k)
-def printx(x, fix, atmo, g, PW):
-    V = fix[0]
-    alpha = x[0]/math.pi*180
-    beta = fix[1]/math.pi*180
-    pqr = x[1:4]/math.pi*180
-    phi = x[4]/math.pi*180
-    theta = x[5]/math.pi*180
-    da = x[6]/math.pi*180
-    de = x[7]/math.pi*180
     
-    print("\nState vector value:")
-    print("V= {0:0.2f}m/s, alpha = {1:0.2f}\xb0, beta={2:0.2f}\xb0, phi={3:0.2f}\xb0, theta={4:0.2f}\xb0".format(V, alpha, beta, phi, theta))
-    print("p={0:0.4f}\xb0/s q={1:0.4f}\xb0/s r={2:0.4f}\xb0/s".format(*pqr))
-    print("da={0:0.2f}\xb0, de= {1:0.2f}\xb0".format(da,de))
+if np.sum(np.absolute((e.Constraints_DEP(k.x,*diccons))))<np.sum(np.absolute(con)) and  Power_minimum>k.fun:
+            Power_minimum =k.fun
+            x_min = k.x
+            con = e.Constraints_DEP(k.x,*diccons)
 
-    V_vect = np.ones(g.N_eng) * V * np.cos((-np.sign(g.PosiEng)) * fix[1] + g.wingsweep) - x[3] * g.PosiEng
+def printx(x, fix, atmo, g, PW):
+        V = fix[0]
+        alpha = x[0]/math.pi*180
+        beta = fix[1]/math.pi*180
+        pqr = x[1:4]/math.pi*180
+        phi = x[4]/math.pi*180
+        theta = x[5]/math.pi*180
+        da = x[6]/math.pi*180
+        de = x[7]/math.pi*180
+    
+        print("\nState vector value:")
+        print("V= {0:0.2f}m/s, alpha = {1:0.2f}\xb0, beta={2:0.2f}\xb0, phi={3:0.2f}\xb0, theta={4:0.2f}\xb0".format(V, alpha, beta, phi, theta))
+        print("p={0:0.4f}\xb0/s q={1:0.4f}\xb0/s r={2:0.4f}\xb0/s".format(*pqr))
+        print("da={0:0.2f}\xb0, de= {1:0.2f}\xb0".format(da,de))
 
-    if g.IsPropWing:
-        if V <= g.VelFlap:
-            PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], g.FlapDefl, g, False, fix[1], x[1], V, x[3])
-        else:
-            PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], 0, g, False, fix[1], x[1], V, x[3])
+        V_vect = np.ones(g.N_eng) * V * np.cos((-np.sign(g.PosiEng)) * fix[1] + g.wingsweep) - x[3] * g.PosiEng
 
-    if g.nofin==False:
-        print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
+        if g.IsPropWing:
+            if V <= g.VelFlap:
+                PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], g.FlapDefl, g, False, fix[1], x[1], V, x[3])
+            else:
+                PW.PlotDist(g.Thrust(x[-g.N_eng:], V_vect)/(2*atmo[1]*g.Sp*V**2), V/atmo[0], atmo, x[0], x[6], 0, g, False, fix[1], x[1], V, x[3])
+
+        if g.nofin==False:
+            print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
 
 printx(k.x, fixtest, atmo,g,PW)
 print(k.fun)
+    
 # check if constraints are validated
 constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
 print(constraints_calc)
 
-# To plot graphs in python - discuss values and constraints
-# Engine thrust distribution, alpha vs v and save the values of functions and plot constr_violation and execution_time
-#color = ['tomato', 'salmon', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'orangered', 'red']
-color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'royalblue', 'navy', 'blue', 'slateblue']
-#Velocities = [10, 12, 15, 17, 20, 23, 25, 27, 30, 33, 35]
-gammas = [-10, -5, 0, 2, 5, 7, 10, 15, 20]
-#alpha = np.zeros(11)
-#de = np.zeros(11)
-function_val = np.zeros(9)
-#constraints_viol = np.zeros(11)
-#exec_time = np.zeros(11)
 
-"""plt.figure(1)
-for i in  range(len(Velocities)):
-    
-    path = 'DECOL_STAB/'  
-    filenameNoFin = [path + '_FinLess_Vinf10000.stab',
-                 path + '_FinLess_Vinf15000.stab',
-                 path + '_FinLess_Vinf20000.stab',
-                 path + '_FinLess_Vinf25000.stab',
-                 path + '_FinLess_Vinf30000.stab',
-                 path + '_FinLess_Vinf35000.stab']
-    MatrixNoFin = ReadFileUtils.ReadStabCoef(filenameNoFin)
-    CoefMatrix=g.NicolosiCoef(MatrixNoFin[:,1:], Mach)
-    Coef=AeroForcesDECOL.CoefInterpol(Velocities[i], CoefMatrix, Velocity)
 
-    # Defining the Propulsion & Wing Interaction
-    g.PolarFlDeflDeg = 5
-    g.PolarAilDeflDeg = 5
-    PropPath = "DECOL_FEM/"
-    PropFilenames = {'fem':[PropPath+"_FinLess_Vinf10000.0"],
-                 'AirfoilPolar':PropPath+"S3010_XTr10_Re350.txt",
-                 'FlapPolar':PropPath+"S3010_XTr10_Re350_fl5.txt",
-                 'AileronPolar':PropPath+"S3010_XTr10_Re350_fl5.txt"} # format for prop file : [[Cldist=f(M)],polar clean airfoil, polar flap, polar aile]
-    PW = PA.PropWing(g,PropFilenames)
-    #PW.AoAZero[:,-1] = PW.AoAZero[:,-1] + 3.2/180*np.pi # Correction for angle of incidence of wing
-    PW.AoAZero[:,0] = PW.AoAZero[:,0]*10**(-3)
-    PW.CLslope[:,0] = PW.CLslope[:,0]*10**(-3)
-    PW.AoAZero[:,1] = PW.AoAZero[:,1]*10**(-6)
-    PW.CLslope[:,1] = PW.CLslope[:,1]*10**(-6)         # In order to express in S.I. units as DECOL.vsp3 yields in mm
-    PW.AoAZero[:,2] = PW.AoAZero[:,2]*10**(-3)
-    PW.CLslope[:,2] = PW.CLslope[:,2]*10**(-3)
-    PW.DeltaCL_a_0 = 1 #CL_alpha correction factor
-    
-    
-    
-    fixtest = np.array([Velocities[i], beta, gamma, omega])
-    diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
-    dicfobj = (np.copy(fixtest), rho, g)
-    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
-                         constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
-                         options={'maxiter': maxit, 
-                                  'disp': True}, tol=tolerance)
-    dx = k.x[9:]
-    x = [1, 2, 3, 4, 5, 6, 7, 8]
-    plt.plot(x, dx, color[i] , label = '%s'% Velocities[i]+'m/s')
-    alpha[i] = k.x[0]*180/math.pi
-    de[i] = k.x[7]*180/math.pi
-    function_val[i] = k.fun
-    #constraints_viol = k.constr_violation
-    #exec_time = k.execution_time
-    
+"""Engine = [1,2,3,4,5,6,7,8]
+del_x = k.x[9:]
+plt.plot(Engine,del_x, color[count],label =str(Velocities[count])+"m/s")
+plt.title("Fraction of maximum Power at each engine")
 plt.xlabel("Engine")
-plt.ylabel("dx")
+plt.ylabel("Delta_x")    
 plt.legend(loc = 'upper right', fontsize = "xx-small")
- 
-plt.figure(2)  
-plt.plot(Velocities[1:-2], alpha[1:-2], 'b' )
-plt.xlabel("Velocity in m/s")
-plt.ylabel("Alpha in degrees")
-
-plt.figure(3)  
-plt.plot(Velocities[1:-2], de[1:-2], 'b' )
-plt.xlabel("Velocity in m/s")
-plt.ylabel("Elevator deflection in degrees")
-plt.show
-    
-
-np.save("Function_SLSQP_e.npy", function_val)
-#np.save("Constraints.npy", constraints_viol)
-#np.save("time.npy", exec_time)"""
-    
-
-"""f_TRM = np.load('Function_TRM_1.npy')
-f_SLSQP = np.load('Function_SLSQP_1.npy')
-f_SLSQP_e = np.load('Function_SLSQP_e.npy')
-f_TRM_e = np.load('Function_TRM_e.npy')
-print(f_TRM)
-print(f_SLSQP)
-print(f_SLSQP_e)
-print(f_TRM_e)
-
-
-plt.figure(1)
-plt.plot(Velocities,f_TRM, 'bo', label ='With DEP')
-plt.plot(Velocities, f_TRM_e, 'ro', label ='With equal thrust')
-plt.xlabel("Velocity in m/s")
-plt.ylabel("Power Consumption")
-plt.legend(loc = 'lower right', fontsize = "xx-small")
-
-plt.figure(2)
-plt.plot(Velocities,f_SLSQP, 'bo', label ='With DEP')
-plt.plot(Velocities, f_SLSQP_e, 'ro', label ='With equal thrust')
-plt.xlabel("Velocity in m/s")
-plt.ylabel("Power Consumption")
-plt.legend(loc = 'lower right', fontsize = "xx-small")"""
-
-
-#Plotting, thrust distribution for different gamma values and comparing the power consumption
-"""plt.figure(1)
-for i in  range(len(gammas)):
-    fixtest = np.array([V, beta, (gammas[i]/180 * np.pi), omega])
-    diccons = (np.copy(fixtest), np.copy(Coef), atmo, g, PW)  # fix, CoefMatrix,Velocities, rho, g
-    dicfobj = (np.copy(fixtest), rho, g)
-    k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, bounds=bnds,
-                         constraints={'type': 'eq', 'fun': e.Constraints_DEP, 'args': diccons},
-                         options={'maxiter': maxit, 
-                                  'disp': True}, tol=tolerance)
-    dx = k.x[9:]
-    x = [1, 2, 3, 4, 5, 6, 7, 8]
-    plt.plot(x, dx, color[i] , label = '%s'% gammas[i])
-    #alpha[i] = k.x[0]*180/math.pi
-    #de[i] = k.x[7]*180/math.pi
-    function_val[i] = k.fun
-    #constraints_viol = k.constr_violation
-    #exec_time = k.execution_time
-    
+plt.grid()
+plt.show()
+Z = [397.53995125454855, 438.57296670349535, 419.4142735202689, 440.18643949094616, 313.6531953322101, 410.14216342352347, 482.0370351986316, 600.5445635914646, 713.4563025540505, 859.1137508254681, 1121.2532233356421]
+plt.scatter(Velocities, P, c='g', label = "Updated model")
+plt.plot(Velocities, P, c='b')
+plt.scatter(Velocities, Z, c='r', label="Old model")
+plt.title("Power(W) variation with Velocity(m/s)")
+plt.xlabel("Velocity m/s")
+plt.ylabel("Power W")
+plt.legend(loc = 'upper right', fontsize = "xx-small")
+plt.grid()
+plt.show()
+print(Power_minimum)
+print(x_min)
+print(con)
+Engine = [1,2,3,4,5,6,7,8]
+del_x = x_min[9:]
+plt.plot(Engine,del_x)
+plt.title("Fraction of maximum Power at each engine")
 plt.xlabel("Engine")
-plt.ylabel("dx")
+plt.ylabel("Delta_x")    
 plt.legend(loc = 'upper right', fontsize = "xx-small")
- 
-np.save('Function_TRM_2.npy', function_val)"""
-
-    
-
-
-
-
-
-
-
-
-
-
-
+plt.grid()
+plt.show()"""

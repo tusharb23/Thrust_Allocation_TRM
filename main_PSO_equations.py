@@ -15,6 +15,8 @@ from datetime import datetime
 from scipy.integrate import odeint
 import random as rnd
 from random import uniform
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 # Import DECOL packages
 import AeroForcesDECOL
@@ -26,34 +28,34 @@ import PSO_implemnted as pso
 def main():
     
     # Atmospheric conditions for H = 0m
-    H = 0 # Altitude(m)
+   """ H = 0 # Altitude(m)
     a = 340.3 # Velocity of Sound at 0m
     rho = 1.225 # Density of air at sea level as obtained from si2py.txt -> Eric Nguyen Van
     atmo = [a, rho]
 
     # Used to obtain Aerodynamic Coefficients at different velocities 
-    Velocities=(10,15,20,25,30,35)
+    Velocity=(10,15,20,25,30,35)
     rho_vec=(1.225,1.225,1.225,1.225,1.225,1.225)
     # Mach = [v/a for v in list(Velocities)]
-    Mach=np.ones((len(Velocities),1))*0.0001 # To have incompressible flow as the speds are considered very low
+    Mach=np.ones((len(Velocity),1))*0.0001 # To have incompressible flow as the speds are considered very low
     
     # Define DECOL Parameters
     inop_eng = 0 # Number of engines that are inoperative
     g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
     
     # Constant Flight Parameters
-    V = 20 # Velocity (m/s)
+    V = 27 # Velocity (m/s)
     M = V/a
     beta = 0 / 180 * math.pi
-    gamma = 2 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
-    R = 1  # in meters the turn radius
+    gamma = 0 / 180 * np.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
+    R = 0  # in meters the turn radius
     g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
 
     # Constraints 
     ThrottleMax = 1  
     ThrottleMin = 0.0001  
-    phiMin = -30*math.pi/180
-    phiMax = 30*math.pi/180
+    phiMin = -10*math.pi/180
+    phiMax = 10*math.pi/180
     thetaMin = -30*math.pi/180
     thetaMax = 30*math.pi/180
                                                                           
@@ -66,6 +68,7 @@ def main():
 
     # FLight measured Cd0:
     g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
+    initial =  [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4]
     
     # --- List all .stab file from vsp aero and read the coeff ----
     path = 'DECOL_STAB/'  # 'home/e.nguyen-van/Documents/DECOLStability&Analysis/DECOLDATA/DECOLGeom_DegenGeom_6_3_18h14
@@ -79,8 +82,8 @@ def main():
     # copy the matrix to avoid error and keep track
     Matrix = np.copy(MatrixNoFin)
     CoefMatrix=g.NicolosiCoef(Matrix[:, 1:], Mach)
-    Coef_base = AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocities)
-    g.Matrix_no_tail_terms = AeroForcesDECOL.CoefInterpol(M, Matrix[:, 1:], Velocities)
+    Coef_base = AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocity)
+    g.Matrix_no_tail_terms = AeroForcesDECOL.CoefInterpol(M, Matrix[:, 1:], Velocity)
     g.PolarFlDeflDeg = 5
     g.PolarAilDeflDeg = 5
     PropPath = "DECOL_FEM/"
@@ -109,10 +112,84 @@ def main():
         omega = V * math.cos(gamma) / R
     # Implement the PSO Algorithm
     fix = np.array([V, beta, gamma, omega])
+    t0 = datetime.now()
     k = pso.minimize(fix, CoefMatrix, atmo, g, PW)
+    t1 = datetime.now()
+    print("Evaluation_time :" , t1-t0)
+    #z = pso.solve(initial, k, fix, CoefMatrix, atmo, g, PW)
+    #k.append(z[-1])
     print(k)
+    np.save("pso_3.npy",k)"""
     
+   """color = ['lightblue', 'deepskyblue', 'dodgerblue', 'royalblue', 'navy']
+    Velocities = [17, 20, 23.5, 25, 27]
+    function_val = np.zeros(5)
+    initial =  [5.0*math.pi/180, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4]
+
+    plt.figure(1)
+    for i in  range(len(Velocities)):
     
+        path = 'DECOL_STAB/'  
+        filenameNoFin = [path + '_FinLess_Vinf10000.stab',
+                 path + '_FinLess_Vinf15000.stab',
+                 path + '_FinLess_Vinf20000.stab',
+                 path + '_FinLess_Vinf25000.stab',
+                 path + '_FinLess_Vinf30000.stab',
+                 path + '_FinLess_Vinf35000.stab']
+        MatrixNoFin = ReadFileUtils.ReadStabCoef(filenameNoFin)
+        CoefMatrix=g.NicolosiCoef(MatrixNoFin[:,1:], Mach)
+        Coef=AeroForcesDECOL.CoefInterpol(Velocities[i], CoefMatrix, Velocity)
+
+    # Defining the Propulsion & Wing Interaction
+        g.PolarFlDeflDeg = 5
+        g.PolarAilDeflDeg = 5
+        PropPath = "DECOL_FEM/"
+        PropFilenames = {'fem':[PropPath+"_FinLess_Vinf10000.0"],
+                 'AirfoilPolar':PropPath+"S3010_XTr10_Re350.txt",
+                 'FlapPolar':PropPath+"S3010_XTr10_Re350_fl5.txt",
+                 'AileronPolar':PropPath+"S3010_XTr10_Re350_fl5.txt"} # format for prop file : [[Cldist=f(M)],polar clean airfoil, polar flap, polar aile]
+        PW = PA.PropWing(g,PropFilenames)
+    #PW.AoAZero[:,-1] = PW.AoAZero[:,-1] + 3.2/180*np.pi # Correction for angle of incidence of wing
+        PW.AoAZero[:,0] = PW.AoAZero[:,0]*10**(-3)
+        PW.CLslope[:,0] = PW.CLslope[:,0]*10**(-3)
+        PW.AoAZero[:,1] = PW.AoAZero[:,1]*10**(-6)
+        PW.CLslope[:,1] = PW.CLslope[:,1]*10**(-6)         # In order to express in S.I. units as DECOL.vsp3 yields in mm
+        PW.AoAZero[:,2] = PW.AoAZero[:,2]*10**(-3)
+        PW.CLslope[:,2] = PW.CLslope[:,2]*10**(-3)
+        PW.DeltaCL_a_0 = 1 #CL_alpha correction factor
+    
+        fix = np.array([Velocities[i], beta, gamma, omega])
+        t0 = datetime.now()
+        k = pso.minimize(fix, CoefMatrix, atmo, g, PW)
+        t1 = datetime.now()
+        print("Evaluation_time :" , t1-t0)     
+        print(k)
+        
+        z = pso.solve(initial, k, fix, CoefMatrix, atmo, g, PW)
+        k.append(z[-1])
+        x = [1, 2, 3, 4, 5, 6, 7, 8]
+        plt.plot(x, k, color[i] , label = '%s'% Velocities[i]+'m/s')
+  
+    plt.xlabel("Engine")
+    plt.ylabel("dx")
+    plt.legend(loc = 'upper right', fontsize = "xx-small")"""
+    
+   Velocities = [17, 20, 23.5, 25, 27]
+   x = np.zeros(5)
+   x[0] = np.load("pso_0.npy")
+   x[1] = np.load("pso_1.npy")
+   x[2] = 1.0144358251923444
+   x[3] = 1.3416001064311758
+   x[4] = 2.1222147697771367
+   y = np.load("TRM_dx.npy")
+   plt.figure(1)
+   plt.plot(Velocities,x, 'go', label ="PSO")
+   plt.plot(Velocities, y, 'bo', label = "TRM")
+   plt.xlabel("Velocity in m/s")
+   plt.ylabel("dx^2")
+   
+   plt.legend()
+   plt.show()
     
 if __name__=='__main__':
     main()

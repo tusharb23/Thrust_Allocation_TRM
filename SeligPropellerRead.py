@@ -72,11 +72,13 @@ class Propu:
             self.Ct=np.array([])
             self.Cp=np.array([])
             self.J=np.array([])
+            self.eta=np.array([])
             Heading=file.readlines(1)
             Heading_split = Heading[0].split()
             Jposi=Heading_split.index('J')
             CTposi=Heading_split.index("CT")
             CPposi=Heading_split.index("CP")
+            etaposi = Heading_split.index("eta")
 
             for line in file:
                 words=line.split()
@@ -84,13 +86,18 @@ class Propu:
                     self.J=np.append(self.J,float(words[Jposi]))
                     self.Ct=np.append(self.Ct,float(words[CTposi]))
                     self.Cp=np.append(self.Cp,float(words[CPposi]))
+                    self.eta= np.append(self.eta,float(words[etaposi]))
+          
             file.close()
             
         #self.cpJ3 = self.Cp/self.J**3 # for determination of J from deltax
         #Como J[0]^3 es 0, vamos a cambiarlo por 0.0001 en plan chapuza. Intenta probar otro valor que no dispare tanto self.cpJ3
 
-        self.J[0]=0.07
-        self.cpJ3 = self.Cp / self.J ** 3  # for determination of J from deltax
+        #self.J[0]=0.07
+        #self.cpJ3 = self.Cp / self.J ** 3  # for determination of J from deltax
+        
+        
+        # Interpolation of coefiicients of Thrust and Power with the Advance ratio
         self.Ct_f_J=interp1d(self.J,self.Ct)
         self.Cp_f_J=interp1d(self.J,self.Cp)
 
@@ -253,4 +260,5 @@ class Propu:
     
     def getn(self, J, V):
         return V/(self.D*J)
+    
             

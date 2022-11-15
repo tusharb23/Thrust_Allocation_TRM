@@ -105,7 +105,7 @@ def fitness(x, fix, CoefMatrix, atmo, g, PropWing):
     z = solve(initial,  x, fix, CoefMatrix, atmo, g, PropWing)
     print(z)
     # Add fitness for the bound values not being satisfied for alpha, p, q, r, phi, theta, da, de, dr and dx[7]
-    if z[0]<-2*math.pi/180 or z[0]> 8*math.pi/180:
+    if z[0]<-2*math.pi/180 or z[0]> 25*math.pi/180:
         fitness += 100
     if z[1]<-0.2 or z[1]> 0.2:
         fitness += 100
@@ -113,17 +113,17 @@ def fitness(x, fix, CoefMatrix, atmo, g, PropWing):
         fitness += 100
     if z[3]<-0.2 or z[3]> 0.2:
         fitness += 100
-    if z[4]<-30*math.pi/180 or z[4]> 30*math.pi/180:
+    if z[4]<-10*math.pi/180 or z[4]> 10*math.pi/180:
         fitness += 100
     if z[5]<-30*math.pi/180 or z[5]> 30*math.pi/180:
         fitness += 100
-    if z[6]<-20*math.pi/180 or z[6]> 20*math.pi/180:
+    if z[6]<-30*math.pi/180 or z[6]> 30*math.pi/180:
         fitness += 100
     if z[7]<-20*math.pi/180 or z[7]> 20*math.pi/180:
         fitness += 100
-    if z[8]<-25*math.pi/180 or z[8]> 25*math.pi/180:
+    if z[8]<-30*math.pi/180 or z[8]> 30*math.pi/180:
         fitness += 100
-    if z[9]<0.1 or z[9]> 1:
+    if z[9]<0.001 or z[9]> 1:
         fitness += 100
     x = np.array(x)
     dx = np.zeros(8)
@@ -242,6 +242,8 @@ def minimize( fix, CoefMatrix, atmo, g, PropWing, fitness = fitness, inds = x, b
     print('\nFINAL SOLUTION:')
     print(f'   > {pos_best_g}')
     print(f'   > {err_best_g}\n')
+    
+    return err_best_g
 
 # f = fitness(inds[0])
 #minimize()

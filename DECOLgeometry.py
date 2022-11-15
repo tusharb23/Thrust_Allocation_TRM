@@ -5,8 +5,20 @@
 
 import math
 import numpy as np
-from SeligPropellerReadPositiveT import Propu
-from SeligPropellerRead import Propu
+from Propeller_Data import Prop
+
+
+""" The Thrust model is based on the momentum theory and the actuator disc theory.
+    It uses data from SeligProp86 to obtain the values of the Thrust and Power co-efficients.
+    The model interpolates values from the SeligProp86
+    TO DO:
+        i Analyse non-linearities
+        ii Take care of Max_Power
+        iii Get the values of J from deltx and find corresponding power and thrust - DONE in SeligPropellerRead"""
+        
+""" Advance Ratio (J) = Velocity of flow at the propeller / Diameter(D) * Rotational Speed (n)
+    n = n_max*dx, where n_max = 10000RPM"""
+    
 
 class data:
     
@@ -62,7 +74,7 @@ class data:
     TipClearance = True
     dprop = 0.1 # Spacing between the propellers
     dfus = 0
-    prop_eff = 0.7 # Propulsion efficiency
+    prop_eff = 0.7 # Propulsion efficiency - considering it to be constant -  NOT IN REALITY
     ip = (-2.41)/180*np.pi # Propeller incidence angle with respect to zero lift line
     h_m = 0.05 # Distance from leading edge to propeller. Propeller is forward      
     x_m = 0.104+h_m # Distance of the leading edge from the CG + h_m      
@@ -73,7 +85,15 @@ class data:
     K_e = 1.44   # Down wash factor, see Modeling the Propeller Slipstream Effect on Lift and Pitching Moment, Bouquet, Thijs; Vos, Roelof
     c_ht = 0.145  # Average chord of the horizontal tail
     var_eps = 1.5  # parameter for inflow in slisptream. See Modeling the Propeller Slipstream Effect on Lift and Pitching Moment, Bouquet, Thijs; Vos, Roelof
-    cm_0_s = -0.0512  # zero lift pitching moment of the wing section at the propeller axis location. From the xlfr5 file, alpha = 0°       
+    cm_0_s = -0.0512  # zero lift pitching moment of the wing section at the propeller axis location. From the xlfr5 file, alpha = 0°  
+
+    # Propeller Data for Accurate Model
+    p_max = 10*14.8; # To be verified
+    AvGearEff=0.80 # average effiency of engine+gearbox
+    D = 8*0.0254 # Diameter in m
+    Pitch = 6*0.0254 # Pitch in m
+    n_max = 16280/60 # Maximum rotations per second considering a nominal voltage of 14.8V
+    
 
     # Propeller Wing Interaction
     IsPropWing=True
@@ -167,15 +187,11 @@ class data:
         self.PosiEng = np.sort(self.PosiEng)
         return   
     
-    def InitPropeller(self, Dia, Pitch):                                       #Dia: Diameter in inches of propeller
-        self.Propeller = Propu(Dia,Pitch)
 
-        #update information about propeller
-        self.Dp = Dia*0.0254
-        self.Sp = np.pi*self.Dp**2/4
   
     def __init__(self, inop_eng, bv=0.329, r=0.057/2, zw=0.073, rf=0.085, zh=0, bvl=0.348, Sh=0.0877, Sv=0.06, TipClearance = True, dfus=0, dprop=0.1):
        
+        self.Propeller = Prop(self.D, self.Pitch, self.n_max, self.p_max)
         self.VTsize=1 # We do not modify the vertical taile size
         self.SetEngineNumber()
         self.inop = inop_eng
@@ -205,8 +221,6 @@ class data:
         self.FlapDefl = 0   # For our problem statement we consider flap and aileron deflection to be zero
         self.Cdo_fl, self.CL0_fl, self.Cm0_fl, self.Cda, self.Cdb, self.Cdc = self.AeroCoefs(self.FlapDefl)
         
-        #Load propeller
-        self.InitPropeller(8, 6)
 
     def AeroCoefs(self, FlapDefl):
          if FlapDefl == 0:
@@ -282,33 +296,26 @@ class data:
 #            print(VeDSC_Coef)
             
         return MVeDSC
- 
-    def DefaultProp(self,dx,V):
-        # Compute thrust based on throttle levels dx
-        # Here, we neglect the effect of the angle of the thrust axis with the aircraft body x axis
-        Thr = dx*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
-        return Thr
-     
+
     def Thrust(self, dx, V):
-        # Same as defaultprop but returns a vector instead
-        Thr = dx*2*self.P_var/(float(self.N_eng)*V)*self.prop_eff
+        
+        self.Thr = self.Propeller.Thrust(dx, V)
         # Get thrust components along the 3 axis
         Thr_xb = 0
         Thr_yb = 0
         Thr_zb = 0
-        Thr_xb = np.sum(Thr*math.cos(self.ip))
-        Thr_zb = -np.sum(Thr*math.sin(self.ip)) # The direction of thrust will be along negative z-axis
+        Thr_xb = np.sum(self.Thr*math.cos(self.ip))
+        Thr_zb = -np.sum(self.Thr*math.sin(self.ip)) # The direction of thrust will be along negative z-axis
         Thr_body = [Thr_xb, Thr_yb, Thr_zb]
         # The thrust is in the body frame so, it needs to be transformed to the aerodynamic frame in Equations
         return Thr_body  
 
     def Torque(self,dx,V):
         # Compute torque consdering ip and hence, moments along all 3 axis
-        Force = self.DefaultProp(dx, V)
         Moment= np.zeros((self.N_eng,3))
         for i in range(self.N_eng):
             a= np.array([ self.x_m , self.PosiEng[i] , self.z_m])
-            b=np.array([ Force[i]*np.cos(self.alpha_i + self.alpha_0+self.ip)  ,  0  ,  -Force[i]*np.sin(self.alpha_i + self.alpha_0+self.ip)  ])
+            b=np.array([ self.Thr[i]*np.cos(self.alpha_i + self.alpha_0+self.ip)  ,  0  ,  -self.Thr[i]*np.sin(self.alpha_i + self.alpha_0+self.ip)  ])
             Moment[i,:] = np.cross(a,b)
         Thrust_Moment = np.array(( np.sum(Moment[:,0]), np.sum(Moment[:,1]) , np.sum(Moment[:,2]) ) )  
         return Thrust_Moment

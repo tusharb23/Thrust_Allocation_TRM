@@ -8,6 +8,7 @@ import numpy as np
 import math
 from numpy.linalg import inv
 import AeroForcesDECOL as AeroForces
+from Propeller_Data import Prop
 
 def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     """function defining constraints for power minimization
@@ -51,7 +52,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     Mx_aero = Tab @ Mx
     
     # Convert thrust in Tc for patterson
-    Tc = g.DefaultProp(x[-g.N_eng:],V_vect)/(2*rho*g.Sp*V**2)   
+    Tc = g.Thr
     F=AeroForces.CalcForce_aeroframe_DEP(V, np.copy(CoefMatrix), np.copy(sub_vect), Tc, atmo, g, PropWing)
     
     # Now sum up the constraints:
@@ -83,7 +84,7 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     
     for i in range(g.inop):
         A[-1-i]=x[-1-i]
-    if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
+    """if beta == 0:                                                                                 #For obligating all the engines to have the same thrust
         #no DEP with original twin or N engines; all engines have the same thrust
         D = np.copy(A)
         for i in range(g.N_eng-g.inop-1):
@@ -91,43 +92,18 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
             D = np.append(D, [AAd])
         return D
     else:
-        return A
+        return A"""
     return A
 
 def fobjectivePower(x, fix, rho, g):
     
     # Objective Function for Power Minimization
     #Power=np.sum(x[-g.N_eng:])*2*g.P_var/float(g.N_eng)*rho/1.225/1000000
-    Power = np.sum(x[-g.N_eng:])*2*g.P_var/float(g.N_eng)/1000000
+    #Power = np.sum(x[-g.N_eng:])*2*g.P_var/float(g.N_eng)/1000000
+    V_vect = np.ones(g.N_eng) * fix[0] * np.cos((-np.sign(g.PosiEng)) * fix[1] + g.wingsweep) - x[3] * g.PosiEng
+    Power = np.sum(g.Propeller.PropPower(x[-g.N_eng:], V_vect))
     return Power
 
-def fobjectivedx(x, fix, rho, g):
-    J = np.sum(x[-g.N_eng:]**2)
-    return J
-
-def fobjectivePropWingInterac(x, fix, rho, g):
-
-    Dx = x[-g.N_eng:]
-    MeanDx = np.mean(Dx)
-    stdDx = np.std(Dx)
-    return MeanDx*0.5+stdDx*0.5
-
-def fobjectiveDrag(x, fix, CoefMatrix , atmo, g, PropWing):
-     rho = atmo[1]
-     V=fix[0]
-     alpha=x[0]
-     beta=fix[1]
-     p=x[1]
-     q=x[2]
-     r=x[3]
-     sub_vect=np.array([alpha,beta,p,q,r])
-     sub_vect=np.append(sub_vect,[x[6],x[7],x[8]])
-     V_vect = np.ones(g.N_eng) * V * np.cos((-np.sign(g.PosiEng)) * beta + g.wingsweep) - r * g.PosiEng
-     Tc = g.DefaultProp(x[-g.N_eng:],V_vect)/(2*rho*g.Sp*V**2) 
-     F=AeroForces.CalcForce_aeroframe_DEP(V, np.copy(CoefMatrix), np.copy(sub_vect), Tc, atmo, g, PropWing)
-     
-     # We send the negative of this value 
-     return -F[0]
 
 
 def Jac_DEP(x, fix, CoefMatrix, atmo, g, PropWing, h):
