@@ -14,15 +14,13 @@ import scipy.linalg
 import scipy.io #input/output with matlab
 from scipy.optimize import  minimize
 from datetime import datetime
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import random
 # Import DECOL packages
 import AeroForcesDECOL
 import DECOLgeometry
 import ReadFileUtils
 import equation as e
 import PattersonAugmented as PA
+import Initial_Points as ip
 
 
 """Create a function to compare when no DEP to define whether optimization required
@@ -31,6 +29,8 @@ import PattersonAugmented as PA
     Engines being Inoperative
     Time Analysis"""
 
+X = np.load("Initial.npy")
+#print(X)
 
 # Atmospheric conditions for H = 0m
 H = 0 # Altitude(m)
@@ -49,9 +49,9 @@ inop_eng = 0 # Number of engines that are inoperative
 g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 
 # Constant Flight Parameters
-V = 35  # Velocity (m/s)
+V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
+beta = 10 / 180 * math.pi
 gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
@@ -123,26 +123,27 @@ g.nofin = False
 g.DisplayPatterInfo = False
 
 # x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
-x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
-   
+#x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees   
 """x0 = np.array([random.uniform(alphaMin,alphaMax),random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(phiMin,phiMax), random.uniform(thetaMin,thetaMax), random.uniform(deltaAMin,deltaAMax), random.uniform(deltaEMin,deltaEMax), random.uniform(deltaRMin, deltaRMax)])
 eng_vec = np.array([random.uniform(0, 1)] * g.N_eng)
 x0 = np.append(x0, eng_vec)""" # --- Define x0 using the polynomial fit instead for a cruise scenario instead of randomly generated initial points  
+# Using the interpolation algorithm described in AeroForcesDECOL
+x0 = ip.interpolateinitial(V, X)
+print(x0)
     
 bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax), (thetaMin,thetaMax), (deltaAMin,deltaAMax), (deltaEMin,deltaEMax), (deltaRMin, deltaRMax))
+bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
+for i in range(int(g.N_eng / 2)):
+    bnds = bnds + bnds_eng
 #Constrains Used by Eric & David
 #phimax = 10  # in degree the max bank angle authorized
 #alphamax = 25  # in degree to adjust if it is below 71m/s
 #deltaRmax = 30  # in degree
 #bnds=( (-5*math.pi/180,alphamax*math.pi/180), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (-phimax/180*math.pi,phimax/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-20/180*math.pi,20/180*math.pi), (-deltaRmax/180*math.pi,deltaRmax/180*math.pi))
-
 # Complete the vectors with engines:
-eng_vec = np.array([0.4] * g.N_eng)
-x0 = np.append(x0, eng_vec)
+#eng_vec = np.array([0.4] * g.N_eng)
+#x0 = np.append(x0, eng_vec)
 ## General formulation:
-bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
-for i in range(int(g.N_eng / 2)):
-        bnds = bnds + bnds_eng
     
 # --- imposed conditions ---
 # fix = [V, beta, gamma, omega, H]
