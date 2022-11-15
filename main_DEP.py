@@ -49,9 +49,9 @@ inop_eng = 0 # Number of engines that are inoperative
 g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 
 # Constant Flight Parameters
-V = 23.5  # Velocity (m/s)
+V = 35  # Velocity (m/s)
 M = V/a
-beta = 10 / 180 * math.pi
+beta = 0 / 180 * math.pi
 gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
@@ -84,15 +84,6 @@ g.alpha_max_fl = 10 / 180 * np.pi
 # FLight measured Cd0:
 g.CD0T = 0.0636         # Global one  extracted from flight not stab the file
                                                             
-# Extracting the aerodynamic coefficients
-#
-#Velocities=(10,12,15,17,20,23,25,27,30,32,35)
-#
-#P = np.zeros(np.size(Velocities))
-#color = ['cyan', 'lightblue', 'deepskyblue', 'steelblue', 'dodgerblue', 'red', 'royalblue', 'navy', 'blue', 'slateblue', 'indigo']
-#plt.Figure()
-#for count in range(np.size(Velocities)):
-#compaare objective function value and constraints
 
 Power_minimum = 148*8;
 x_min = np.zeros(17)
@@ -132,7 +123,7 @@ g.nofin = False
 g.DisplayPatterInfo = False
 
 # x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
-    #x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
+x0=np.array([5*math.pi/180, 0,0,0, 0.00, 0.0, 0.0, 0.0, 0.0]) # Assuming initial alpha to be 5degrees
    
 """x0 = np.array([random.uniform(alphaMin,alphaMax),random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(-0.2,0.2), random.uniform(phiMin,phiMax), random.uniform(thetaMin,thetaMax), random.uniform(deltaAMin,deltaAMax), random.uniform(deltaEMin,deltaEMax), random.uniform(deltaRMin, deltaRMax)])
 eng_vec = np.array([random.uniform(0, 1)] * g.N_eng)
@@ -146,8 +137,8 @@ bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax),
 #bnds=( (-5*math.pi/180,alphamax*math.pi/180), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (-phimax/180*math.pi,phimax/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-30/180*math.pi,30/180*math.pi), (-20/180*math.pi,20/180*math.pi), (-deltaRmax/180*math.pi,deltaRmax/180*math.pi))
 
 # Complete the vectors with engines:
-    #eng_vec = np.array([0.4] * g.N_eng)
-    #x0 = np.append(x0, eng_vec)
+eng_vec = np.array([0.4] * g.N_eng)
+x0 = np.append(x0, eng_vec)
 ## General formulation:
 bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
 for i in range(int(g.N_eng / 2)):
@@ -215,36 +206,3 @@ constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
 print(constraints_calc)
 
-
-
-"""Engine = [1,2,3,4,5,6,7,8]
-del_x = k.x[9:]
-plt.plot(Engine,del_x, color[count],label =str(Velocities[count])+"m/s")
-plt.title("Fraction of maximum Power at each engine")
-plt.xlabel("Engine")
-plt.ylabel("Delta_x")    
-plt.legend(loc = 'upper right', fontsize = "xx-small")
-plt.grid()
-plt.show()
-Z = [397.53995125454855, 438.57296670349535, 419.4142735202689, 440.18643949094616, 313.6531953322101, 410.14216342352347, 482.0370351986316, 600.5445635914646, 713.4563025540505, 859.1137508254681, 1121.2532233356421]
-plt.scatter(Velocities, P, c='g', label = "Updated model")
-plt.plot(Velocities, P, c='b')
-plt.scatter(Velocities, Z, c='r', label="Old model")
-plt.title("Power(W) variation with Velocity(m/s)")
-plt.xlabel("Velocity m/s")
-plt.ylabel("Power W")
-plt.legend(loc = 'upper right', fontsize = "xx-small")
-plt.grid()
-plt.show()
-print(Power_minimum)
-print(x_min)
-print(con)
-Engine = [1,2,3,4,5,6,7,8]
-del_x = x_min[9:]
-plt.plot(Engine,del_x)
-plt.title("Fraction of maximum Power at each engine")
-plt.xlabel("Engine")
-plt.ylabel("Delta_x")    
-plt.legend(loc = 'upper right', fontsize = "xx-small")
-plt.grid()
-plt.show()"""
