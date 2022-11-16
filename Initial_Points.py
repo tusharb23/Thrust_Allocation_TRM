@@ -47,7 +47,7 @@ g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 # Constant Flight Parameters
 V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
+beta = 10 / 180 * math.pi
 gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2 
@@ -87,7 +87,7 @@ Velocities=(10,12,15,17,20,23,25,27,30,32,35)
 
 X_initial = np.zeros((len(Velocities),17))
 #compaare objective function value and constraints
-
+#X_initial = np.load("Initial.npy")
 
 
 # x =[alpha, p, q, r, phi, theta, delta_a, delta_e, delta_r, delta_i] where delta i has 8 elelments
@@ -101,12 +101,23 @@ bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
 for i in range(int(g.N_eng / 2)):
     bnds = bnds + bnds_eng
 
-
+"""P = np.zeros((len(Velocities),1))
 for i in range(len(Velocities)):
     V = Velocities[i]
-    temp = opt.opt_call(g, V, beta, gamma, R, Mach, Velocity, x0, bnds)
-    X_initial[i,:] = temp
+    p = opt.opt_call(g, V, beta, gamma, R, Mach, Velocity, X_initial[i], bnds)
+    P[i] = p
+
+plt.title("Power Consumption Curve")
+plt.xlabel("Power Consumed (W)")
+plt.ylabel("Velocity (m/s)")
+plt.plot(Velocities,P)
+plt.show()"""
+
     
+for i in range(len(Velocities)):
+    V = Velocities[i]
+    x0 = opt.opt_call(g, V, beta, gamma, R, Mach, Velocity, x0, bnds)
+    X_initial[i,:] = x0
 np.save("Initial",X_initial)
 
 

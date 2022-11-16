@@ -51,7 +51,7 @@ g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 # Constant Flight Parameters
 V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 0 / 180 * math.pi
+beta = 10 / 180 * math.pi
 gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    

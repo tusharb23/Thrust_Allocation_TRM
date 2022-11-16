@@ -73,7 +73,7 @@ def opt_call(g, V, beta, gamma, R, Mach, Velocity, x0, bnds):
                                   'disp': True}, tol=tolerance)
     t1 = datetime.now()
     print("Evaluation_time :" , t1-t0)
-    return k.x
+    return k.fun
 
 def fitmodify(X, Velocities):
     # Here we modify the initial estimates for all the values after 20m/s as the optimization algorithm 
