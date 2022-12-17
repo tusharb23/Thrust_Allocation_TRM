@@ -21,6 +21,7 @@ import ReadFileUtils
 import equation as e
 import PattersonAugmented as PA
 import Optimization_Call as op
+import stability as stab
 
 
 """Create a function to compare when no DEP to define whether optimization required
@@ -51,7 +52,7 @@ g = DECOLgeometry.data(inop_eng, r=0.113 / 2, rf=0.1865 / 2, zw=0.045)
 # Constant Flight Parameters
 V = 23.5  # Velocity (m/s)
 M = V/a
-beta = 10 / 180 * math.pi
+beta = 0 / 180 * math.pi
 gamma = 0 / 180 * math.pi  # math.atan(0/87.4)#/180*math.pi # 3% slope gradient # 6.88m/s vertical
 R = 0  # in meters the turn radius
 g.P_var = 8 * 14.4 * 4  # I*V*N_eng/2    
@@ -196,4 +197,9 @@ print(k.fun)
 constraints_calc=e.Constraints_DEP(k.x,*diccons)
 print("\nConstraints")
 print(constraints_calc)
+
+# Checking stability of the aircraft for different trim conditions
+dx = stab.Jacobian(k.x, np.copy(fixtest), np.copy(Coef), atmo, g, PW);
+print(dx)
+
 
