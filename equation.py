@@ -71,14 +71,14 @@ def Constraints_DEP(x, fix, CoefMatrix, atmo, g, PropWing):
     A8 = gamma
     A9 = Omega
     """
-    A[0]=-9.81*np.sin(gamma)+F[0]/g.m+Fx_aero[0]/g.m
-    A[1]=(p*np.sin(alpha) - r*np.cos(alpha))+g.m*9.81*sinbank/(g.m*V) + F[1]/(g.m*V) + Fx_aero[1]/(g.m*V)
-    A[2]=-(np.sin(beta)*(p*np.cos(alpha)+r*np.sin(alpha))-q*np.cos(beta))/np.cos(beta)+ 9.81*cosbank/(V*np.cos(beta)) + F[2]/(g.m*V*np.cos(beta))+Fx_aero[2]/(g.m*V*np.cos(beta))
-    A[3:6] = np.dot(inv(I), np.array([Mx_aero[0], Mx_aero[1], Mx_aero[2]])+F[3:6]-np.cross(np.array([p, q, r]), np.dot(I, np.array([p, q, r]))))
-    A[6]=p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta)
-    A[7]=q*math.cos(phi) -r*math.sin(phi)
-    A[8]=-np.sin(gamma)+np.cos(alpha)*np.cos(beta)*np.sin(theta)-np.sin(beta)*np.sin(phi)*np.cos(theta)-np.sin(alpha)*np.cos(beta)*np.cos(phi)*np.cos(theta)
-    A[9]=-omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta)
+    A[0]=-9.81*np.sin(gamma)+F[0]/g.m+Fx_aero[0]/g.m # Velocity_derivative
+    A[1]=(p*np.sin(alpha) - r*np.cos(alpha))+g.m*9.81*sinbank/(g.m*V) + F[1]/(g.m*V) + Fx_aero[1]/(g.m*V) # Beta_derivative
+    A[2]=-(np.sin(beta)*(p*np.cos(alpha)+r*np.sin(alpha))-q*np.cos(beta))/np.cos(beta)+ 9.81*cosbank/(V*np.cos(beta)) + F[2]/(g.m*V*np.cos(beta))+Fx_aero[2]/(g.m*V*np.cos(beta)) # Alpha_derivative
+    A[3:6] = np.dot(inv(I), np.array([Mx_aero[0], Mx_aero[1], Mx_aero[2]])+F[3:6]-np.cross(np.array([p, q, r]), np.dot(I, np.array([p, q, r])))) #p,q,r_derivative
+    A[6]=p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta) # phi_derivtive
+    A[7]=q*math.cos(phi) -r*math.sin(phi) # theta_derivative
+    A[8]=-np.sin(gamma)+np.cos(alpha)*np.cos(beta)*np.sin(theta)-np.sin(beta)*np.sin(phi)*np.cos(theta)-np.sin(alpha)*np.cos(beta)*np.cos(phi)*np.cos(theta) # No derivative
+    A[9]=-omega + (q*np.sin(phi)+r*np.cos(phi))/np.cos(theta) # No derivative
 
     #if beta  0, make all the thrust equal
     

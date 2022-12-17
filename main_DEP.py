@@ -30,7 +30,7 @@ import Optimization_Call as op
     Time Analysis"""
 
 X = np.transpose(np.load("Initial.npy"))
-print(X)
+
 
 # Atmospheric conditions for H = 0m
 H = 0 # Altitude(m)
@@ -122,7 +122,7 @@ x0 = np.append(x0, eng_vec)""" # --- Define x0 using the polynomial fit instead 
 # Using the interpolation algorithm described in AeroForcesDECOL
 Velocities=(10,12,15,17,20,23,25,27,30,32,35)
 x0 = np.transpose(op.interpolateinitial(V, X, Velocities))
-print(x0)
+
     
 bnds=( (alphaMin,alphaMax), (-0.2,0.2), (-0.2,0.2), (-0.2,0.2), (phiMin,phiMax), (thetaMin,thetaMax), (deltaAMin,deltaAMax), (deltaEMin,deltaEMax), (deltaRMin, deltaRMax))
 bnds_eng = ((ThrottleMin, ThrottleMax), (ThrottleMin, ThrottleMax))
