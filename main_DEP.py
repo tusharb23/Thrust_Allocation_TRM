@@ -9,6 +9,7 @@
 
 # Import required inbuilt packages
 import numpy as np
+from numpy.linalg import eigvals
 import math
 import scipy.linalg
 #import scipy.io #input/output with matlab
@@ -22,6 +23,7 @@ import equation as e
 import PattersonAugmented as PA
 import Optimization_Call as op
 import stability as stab
+import state_space as ss
 
 
 """Create a function to compare when no DEP to define whether optimization required
@@ -160,7 +162,7 @@ k = minimize(e.fobjectivePower, np.copy(x0), args=dicfobj, method = 'trust-const
                          options={'maxiter': maxit, 
                                   'disp': True}, tol=tolerance)
 t1 = datetime.now()
-print("Evaluation_time :" , t1-t0)
+#print("Evaluation_time :" , t1-t0)
 print(k)
 
 
@@ -190,16 +192,47 @@ def printx(x, fix, atmo, g, PW):
         if g.nofin==False:
             print("dr = {0:0.2f}\xb0".format(x[8]/math.pi*180))
 
+# print("\nOptimal Solution")
 printx(k.x, fixtest, atmo,g,PW)
 print(k.fun)
     
 # check if constraints are validated
 constraints_calc=e.Constraints_DEP(k.x,*diccons)
-print("\nConstraints")
-print(constraints_calc)
+#print("\nConstraints")
+#print(constraints_calc)
 
-# Checking stability of the aircraft for different trim conditions
-dx = stab.Jacobian(k.x, np.copy(fixtest), np.copy(Coef), atmo, g, PW);
+# Checking stability of the aircraft for the trim condition obtained
+dx = stab.Jacobian(k.x, np.copy(fixtest), np.copy(CoefMatrix), atmo, g, PW);
+print("\nComplete Jacobian")
 print(dx)
+''' It is important to emphasize that the quantities defined above by the Jacobian are not 
+just the partial derivatives but the derivatives devided by the mass and inertia values respectively'''
+# Now we have the Jacobian of the aircraft at a trim condition --  inorder to assess the stability 
+# of the aircraft at different trim conditions obtain the eigen values/ roots
+# But eigen values are defined only for square matrices. 
+# From the above equations we arrive at a small disturbance equation for all the variables
+# in longitudinal and lateral modes combined-- Now we can put other perturbations to zero and analyze of analyze for specfic variables
+
+# Now, for longitudinal flight we know that the first, third and the fifth and eigth equations correspond to the longitudinal variables
+# Before that, it is imporant to emphasize that now the moments due to thrust vectors are not zero - maybe less for pitching but still there
+
+A = ss.longitudinalss(dx)
+print("\nLongitudinal State Space Matrix A")
+print(A)
+eigenvalues = eigvals(A)
+print("\nPure Longitudinal Eigen Values")
+print(eigenvalues)
+
+
+# Similarly for lateral dynamics
+A = ss.lateralss(dx)
+print("\nLateral State Space Matrix A")
+print(A)
+eigenvalues = eigvals(A)
+print("\nPure Lateral Eigen Values")
+print(eigenvalues)
+
+
+# For damping and frequency refer to page 90 cauchey
 
 
