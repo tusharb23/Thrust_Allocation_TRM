@@ -79,4 +79,7 @@ def Jacobian(x, fix, CoefMatrix, atmo, g, PropWing):
 
 # V, beta, gamma, alpha, p, q, r, phi, theta, delta_a, delta_e. delta_r, delta_x
 # V, beta, alpha, p, q, r, phi, theta
+# From the above dx get A and B and use it to obtain the step response of the system or something for a small step
+# For control fixed response set B as zero
+
 

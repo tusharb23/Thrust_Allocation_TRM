@@ -10,7 +10,7 @@ from math import pi
 from scipy.interpolate import interp1d
 import numpy as np
 
-
+# This is based on assuming V as velocity along all
 class Prop:
     rho = 1.225    
     def __init__(self, D,Pitch, n_max, p_max):

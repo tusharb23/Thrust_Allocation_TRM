@@ -11,6 +11,7 @@
 import numpy as np
 from numpy.linalg import eigvals
 import math
+import cmath
 import scipy.linalg
 #import scipy.io #input/output with matlab
 from scipy.optimize import  minimize
@@ -24,6 +25,7 @@ import PattersonAugmented as PA
 import Optimization_Call as op
 import stability as stab
 import state_space as ss
+import Turbulence as turb
 
 
 """Create a function to compare when no DEP to define whether optimization required
@@ -217,11 +219,22 @@ just the partial derivatives but the derivatives devided by the mass and inertia
 # Before that, it is imporant to emphasize that now the moments due to thrust vectors are not zero - maybe less for pitching but still there
 
 A = ss.longitudinalss(dx)
-print("\nLongitudinal State Space Matrix A")
+print("\nLongitudinal State Space Matrix A") # We can verify that the matrix is correct because the row corresponding to theta are all zeros, except for the one corresponding to q column
 print(A)
 eigenvalues = eigvals(A)
 print("\nPure Longitudinal Eigen Values")
 print(eigenvalues)
+
+# Obtaining the damping and frequency-- Cauchey
+lambda1 = math.sqrt(1/(1+(eigenvalues[0].imag/eigenvalues[0].real)**2))
+w1 = -eigenvalues[0].real/lambda1
+lambda2 = math.sqrt(1/(1+(eigenvalues[1].imag/eigenvalues[1].real)**2))
+w2 = -eigenvalues[1].real/lambda2
+lambda3 = math.sqrt(1/(1+(eigenvalues[2].imag/eigenvalues[2].real)**2))
+w3 = -eigenvalues[2].real/lambda3
+lambda4 = math.sqrt(1/(1+(eigenvalues[3].imag/eigenvalues[3].real)**2))
+w4 = -eigenvalues[3].real/lambda4
+print("\nShort Period Mode characteristics:", "Damping ratio:",lambda1, "Frequency:", w1,"rad/s")
 
 
 # Similarly for lateral dynamics
@@ -231,8 +244,17 @@ print(A)
 eigenvalues = eigvals(A)
 print("\nPure Lateral Eigen Values")
 print(eigenvalues)
+lambda1 = math.sqrt(1/(1+(eigenvalues[0].imag/eigenvalues[0].real)**2))
+w1 = -eigenvalues[0].real/lambda1 # Roll mode
+lambda4 = math.sqrt(1/(1+(eigenvalues[3].imag/eigenvalues[3].real)**2))
+w4 = -eigenvalues[3].real/lambda4 # Spiral mode
+# Dutch Roll
+lambdad = math.sqrt(1/(1+(eigenvalues[1].imag/eigenvalues[1].real)**2))
+wd = -eigenvalues[1].real/lambdad
+print("\nDutch Roll Mode characteristics:", "Damping ratio:",lambdad, "Frequency:", wd,"rad/s\n")
 
-
-# For damping and frequency refer to page 90 cauchey
+# Turbulence
+dxt = turb.turbulence_ss(k.x, np.copy(fixtest), np.copy(CoefMatrix), atmo, g, PW);
+print(dxt)
 
 
