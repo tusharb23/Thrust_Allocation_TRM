@@ -29,7 +29,7 @@ def turbulence_ss(x, fix, CoefMatrix, atmo, g, PropWing):
     equations. The number of columns is same as the number of fixed variables -(omega since only in last equation)
     plus the number of variables in x. This gives the total uncoupled Jacobian of the aircraft for analysis."""
     
-    ug =0; vg=0; wg = 0;
+    ug =0; vg=0; wg = 0; pg =0; qg =0; rg =0;
     
     # Gusts centered about, ug =0, vg =0, wg =0---> If they are along the positive direction, their effect will be negative 
     step_vector = 0.001; # Let
@@ -39,7 +39,7 @@ def turbulence_ss(x, fix, CoefMatrix, atmo, g, PropWing):
     V2 = V -(ug-step_vector)
     
     length_x = len(x);
-    dx = np.zeros((8,3));
+    dx = np.zeros((8,6));
     Coef=AeroForcesDECOL.CoefInterpol(V, CoefMatrix, Velocity)
     tuple_1 = (CoefMatrix, atmo, g, PropWing)
     Coef=AeroForcesDECOL.CoefInterpol(V1, CoefMatrix, Velocity)
@@ -57,7 +57,7 @@ def turbulence_ss(x, fix, CoefMatrix, atmo, g, PropWing):
     dx[:,0] = k[:8,0]
     
     fix_high = np.zeros(np.size(fix));
-    fix_high[1] = -(vg + step_vector)/V; # --ug
+    fix_high[1] = -(vg + step_vector)/V; # --vg
     fix_low = np.zeros(np.size(fix));
     fix_low[1] = -(vg-step_vector)/V;
     k = (e.Dynamics_DEP(x, fix+fix_high, *tuple_1) - e.Dynamics_DEP(x, fix+fix_low, *tuple_1) )/(2*step_vector)
@@ -66,12 +66,38 @@ def turbulence_ss(x, fix, CoefMatrix, atmo, g, PropWing):
     
 
     x_high = np.zeros(np.size(x));
-    x_high[1] = -(wg + step_vector)/V; # --ug
+    x_high[1] = -(wg + step_vector)/V; # --wg
     x_low = np.zeros(np.size(x));
     x_low[1] = -(wg-step_vector)/V;
     k = (e.Dynamics_DEP(x+x_high, fix, *tuple_1) - e.Dynamics_DEP(x+x_low, fix, *tuple_1) )/(2*step_vector)
     k = np.reshape(k,(10,1))
     dx[:,2] = k[:8,0]
+    
+    # Now add p, q, r of the turbulence as disturbance along the p,q and r; 3,4,5
+    
+    x_high = np.zeros(np.size(x));
+    x_high[3] = -(pg + step_vector)/V; # --pg
+    x_low = np.zeros(np.size(x));
+    x_low[3] = -(pg-step_vector)/V;
+    k = (e.Dynamics_DEP(x+x_high, fix, *tuple_1) - e.Dynamics_DEP(x+x_low, fix, *tuple_1) )/(2*step_vector)
+    k = np.reshape(k,(10,1))
+    dx[:,3] = k[:8,0]
+    
+    x_high = np.zeros(np.size(x));
+    x_high[4] = -(qg + step_vector)/V; # --qg
+    x_low = np.zeros(np.size(x));
+    x_low[4] = -(qg-step_vector)/V;
+    k = (e.Dynamics_DEP(x+x_high, fix, *tuple_1) - e.Dynamics_DEP(x+x_low, fix, *tuple_1) )/(2*step_vector)
+    k = np.reshape(k,(10,1))
+    dx[:,4] = k[:8,0]
+    
+    x_high = np.zeros(np.size(x));
+    x_high[5] = -(rg + step_vector)/V; # --rg
+    x_low = np.zeros(np.size(x));
+    x_low[5] = -(rg-step_vector)/V;
+    k = (e.Dynamics_DEP(x+x_high, fix, *tuple_1) - e.Dynamics_DEP(x+x_low, fix, *tuple_1) )/(2*step_vector)
+    k = np.reshape(k,(10,1))
+    dx[:,5] = k[:8,0]
     
     return dx
     

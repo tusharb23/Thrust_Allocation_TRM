@@ -252,8 +252,10 @@ w4 = -eigenvalues[3].real/lambda4 # Spiral mode
 lambdad = math.sqrt(1/(1+(eigenvalues[1].imag/eigenvalues[1].real)**2))
 wd = -eigenvalues[1].real/lambdad
 print("\nDutch Roll Mode characteristics:", "Damping ratio:",lambdad, "Frequency:", wd,"rad/s\n")
+## Root Locus for V vs eigen for both codes
 
-# Turbulence
+
+# Turbulence complete Jacobian 
 dxt = turb.turbulence_ss(k.x, np.copy(fixtest), np.copy(CoefMatrix), atmo, g, PW);
 print(dxt)
 
